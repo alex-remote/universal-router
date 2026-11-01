@@ -4,15 +4,15 @@ pragma solidity ^0.8.24;
 import {IUniversalRouter} from './IUniversalRouter.sol';
 
 /// @title ISwapProxy
-/// @notice Interface for the SwapProxy contract that enables 2-tx swap flow without Permit2
+/// @notice SwapProxy 合约的接口，该合约支持无需 Permit2 的两笔交易兑换流程
 interface ISwapProxy {
-    /// @notice Pull ERC20 tokens from msg.sender into the Universal Router, then execute commands
-    /// @param router The Universal Router to execute commands on
-    /// @param token The ERC20 token to pull from the caller
-    /// @param amount The amount of tokens to transfer into the UR
-    /// @param commands The encoded UR commands to execute
-    /// @param inputs The encoded inputs for each command
-    /// @param deadline The transaction deadline
+    /// @notice 从 msg.sender 拉取 ERC20 代币到 Universal Router，然后执行命令
+    /// @param router 用于执行命令的 Universal Router
+    /// @param token 从调用者处拉取的 ERC20 代币
+    /// @param amount 转入 UR 的代币数量
+    /// @param commands 待执行的已编码 UR 命令
+    /// @param inputs 每条命令对应的已编码输入参数
+    /// @param deadline 交易截止时间
     function execute(
         IUniversalRouter router,
         address token,

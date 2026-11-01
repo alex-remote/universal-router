@@ -27,7 +27,7 @@
 | 子代理 | 范围 | 文件数 | 行数 | 状态 |
 | --- | --- | ---: | ---: | --- |
 | A01 | 核心合约：Dispatcher / Lock | 3 | 399 | ✅ 已完成 |
-| A02 | 核心合约：Router / RouteSigner / 接口 | 5 | 329 | 进行中 |
+| A02 | 核心合约：Router / RouteSigner / 接口 | 5 | 329 | ✅ 已完成 |
 | A03 | 库 / 类型 / 部署辅助合约 | 7 | 155 | ✅ 已完成 |
 | A04 | 模块：Payments / Permit2 / 迁移 | 6 | 375 | ✅ 已完成 |
 | A05 | 模块：Uniswap V2 | 3 | 303 | ✅ 已完成 |
@@ -46,8 +46,15 @@
 | A18 | CI 工作流与配置文件 | 8 | 358 | ✅ 已完成 |
 | M01 | README.md | 1 | 228 | ✅ 已完成 |
 | M02 | PR 审查提示词 | 1 | 182 | ✅ 已完成 |
-| M03 | CLAUDE.md（根目录 / audit / contracts 上半） | 6 | 148 | 进行中 |
-| M04 | CLAUDE.md（contracts 下半 / 部署 / 测试） | 6 | 186 | 进行中 |
+| M03 | CLAUDE.md（根目录 / audit / contracts 上半） | 6 | 148 | ✅ 已完成 |
+| M04 | CLAUDE.md（contracts 下半 / 部署 / 测试） | 6 | 186 | ✅ 已完成 |
+
+## 总校验结果
+
+- 进度：**106 / 106 个文件已完成**（22 个子代理全部汇报完成并经主代理复核）。
+- 以翻译前提交 `edf19bf` 为基准逐文件比对：106 个文件全部通过；92 个代码/配置文件行数均不变，每行非注释代码与原件完全一致；14 个 `_zh.md` 译文与原件行数一致、代码围栏数量一致，原件未改动。
+- 除上述文件与本跟踪文档外，没有其它文件被改动。
+- 仍保留英文的注释共 126 行，均属按规则保留的内容：`SPDX-License-Identifier` 行 67 行；`@inheritdoc` 及只有标签加名称的行（如 `/// @title Lock`）；纯公式或常量行（如 `// 0x00 <= command < 0x21`、`/// @dev bytes32(uint256(keccak256("RouteSigner")) - 1)`）；只由代币名组成的兑换路径（如 `// DAI -> USDC -> WETH`）；被注释掉的代码（如 `// DONATE = 0x0a,`）；yml 中的 action 版本钉注释（如 `# v5.0.0`）。
 
 ## 一、代码 / 配置文件（原位替换注释）
 
@@ -61,11 +68,11 @@
 
 ### A02 · 核心合约：Router / RouteSigner / 接口
 
-- [ ] `contracts/UniversalRouter.sol` — 98 行（注释约 10 行）
-- [ ] `contracts/SwapProxy.sol` — 34 行（注释约 11 行）
-- [ ] `contracts/base/RouteSigner.sol` — 96 行（注释约 21 行）
-- [ ] `contracts/interfaces/ISwapProxy.sol` — 24 行（注释约 9 行）
-- [ ] `contracts/interfaces/IUniversalRouter.sol` — 77 行（注释约 39 行）
+- [x] `contracts/UniversalRouter.sol` — 98 行（注释约 10 行）
+- [x] `contracts/SwapProxy.sol` — 34 行（注释约 11 行）
+- [x] `contracts/base/RouteSigner.sol` — 96 行（注释约 21 行）
+- [x] `contracts/interfaces/ISwapProxy.sol` — 24 行（注释约 9 行）
+- [x] `contracts/interfaces/IUniversalRouter.sol` — 77 行（注释约 39 行）
 
 ### A03 · 库 / 类型 / 部署辅助合约
 
@@ -213,21 +220,21 @@
 
 ### M03 · CLAUDE.md（根目录 / audit / contracts 上半）
 
-- [ ] `CLAUDE.md` → `CLAUDE_zh.md` — 47 行
-- [ ] `audit/CLAUDE.md` → `audit/CLAUDE_zh.md` — 17 行
-- [ ] `contracts/base/CLAUDE.md` → `contracts/base/CLAUDE_zh.md` — 22 行
-- [ ] `contracts/deploy/CLAUDE.md` → `contracts/deploy/CLAUDE_zh.md` — 17 行
-- [ ] `contracts/interfaces/CLAUDE.md` → `contracts/interfaces/CLAUDE_zh.md` — 21 行
-- [ ] `contracts/libraries/CLAUDE.md` → `contracts/libraries/CLAUDE_zh.md` — 24 行
+- [x] `CLAUDE.md` → `CLAUDE_zh.md` — 47 行
+- [x] `audit/CLAUDE.md` → `audit/CLAUDE_zh.md` — 17 行
+- [x] `contracts/base/CLAUDE.md` → `contracts/base/CLAUDE_zh.md` — 22 行
+- [x] `contracts/deploy/CLAUDE.md` → `contracts/deploy/CLAUDE_zh.md` — 17 行
+- [x] `contracts/interfaces/CLAUDE.md` → `contracts/interfaces/CLAUDE_zh.md` — 21 行
+- [x] `contracts/libraries/CLAUDE.md` → `contracts/libraries/CLAUDE_zh.md` — 24 行
 
 ### M04 · CLAUDE.md（contracts 下半 / 部署 / 测试）
 
-- [ ] `contracts/modules/CLAUDE.md` → `contracts/modules/CLAUDE_zh.md` — 32 行
-- [ ] `contracts/test/CLAUDE.md` → `contracts/test/CLAUDE_zh.md` — 25 行
-- [ ] `contracts/types/CLAUDE.md` → `contracts/types/CLAUDE_zh.md` — 23 行
-- [ ] `deploy-addresses/CLAUDE.md` → `deploy-addresses/CLAUDE_zh.md` — 40 行
-- [ ] `script/deployParameters/CLAUDE.md` → `script/deployParameters/CLAUDE_zh.md` — 34 行
-- [ ] `test/integration-tests/shared/CLAUDE.md` → `test/integration-tests/shared/CLAUDE_zh.md` — 32 行
+- [x] `contracts/modules/CLAUDE.md` → `contracts/modules/CLAUDE_zh.md` — 32 行
+- [x] `contracts/test/CLAUDE.md` → `contracts/test/CLAUDE_zh.md` — 25 行
+- [x] `contracts/types/CLAUDE.md` → `contracts/types/CLAUDE_zh.md` — 23 行
+- [x] `deploy-addresses/CLAUDE.md` → `deploy-addresses/CLAUDE_zh.md` — 40 行
+- [x] `script/deployParameters/CLAUDE.md` → `script/deployParameters/CLAUDE_zh.md` — 34 行
+- [x] `test/integration-tests/shared/CLAUDE.md` → `test/integration-tests/shared/CLAUDE_zh.md` — 32 行
 
 ## 附录：无需翻译的文件（无英文注释）
 

@@ -5,33 +5,33 @@ import {EIP712} from '@openzeppelin/contracts/utils/cryptography/EIP712.sol';
 import {ECDSA} from '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 
 /// @title RouteSigner
-/// @notice Contract for managing signed execution context using transient storage
+/// @notice 使用瞬态存储（transient storage）管理签名执行上下文的合约
 abstract contract RouteSigner is EIP712 {
-    /// @notice Transient storage slot for the route signer address
+    /// @notice 存放路由签名者地址的瞬态存储槽
     /// @dev bytes32(uint256(keccak256("RouteSigner")) - 1)
     bytes32 private constant ROUTE_SIGNER_SLOT = 0xd317c76a4357223a1868125ee857a1f31cabfcec288f6cdd0ea8c52b6a71ee31;
 
-    /// @notice Transient storage slot for the route intent
+    /// @notice 存放路由 intent 的瞬态存储槽
     /// @dev bytes32(uint256(keccak256("RouteIntent")) - 1)
     bytes32 private constant ROUTE_INTENT_SLOT = 0xa42de8dec63499ed8713dc6815ea14006a1f8e80e1664c66e3beb461bb65b0da;
 
-    /// @notice Transient storage slot for the route data
+    /// @notice 存放路由 data 的瞬态存储槽
     /// @dev bytes32(uint256(keccak256("RouteData")) - 1)
     bytes32 private constant ROUTE_DATA_SLOT = 0x17350132762f24cc4b86e10621ea1e0b5c33483a51cca86a1b11e7ed029b6eb6;
 
-    /// @notice EIP712 typehash for signed execution
+    /// @notice 签名执行所用的 EIP712 typehash
     bytes32 internal constant EXECUTE_SIGNED_TYPEHASH = keccak256(
         'ExecuteSigned(bytes commands,bytes[] inputs,bytes32 intent,bytes32 data,address sender,bytes32 nonce,uint256 deadline)'
     );
 
-    /// @notice Mapping of used nonces for replay protection
-    /// @dev Unordered nonces allow parallel execution of signed routes
+    /// @notice 已使用 nonce 的映射，用于防重放
+    /// @dev 无序 nonce 允许并行执行多个签名路由
     mapping(address user => mapping(bytes32 nonce => bool used)) public noncesUsed;
 
-    /// @notice Thrown when a nonce has already been used
+    /// @notice 当 nonce 已被使用时抛出
     error NonceAlreadyUsed();
 
-    /// @dev Stores the signature context (signer, intent, data) in transient storage
+    /// @dev 将签名上下文（signer、intent、data）存入瞬态存储
     function _setSignatureContext(
         bytes calldata commands,
         bytes[] calldata inputs,
@@ -42,7 +42,7 @@ abstract contract RouteSigner is EIP712 {
         bytes calldata signature,
         uint256 deadline
     ) internal returns (address signer) {
-        // Hash the inputs array per EIP712: hash each element, concatenate, then hash again
+        // 按 EIP712 规则对 inputs 数组求哈希：先对每个元素求哈希，拼接后再整体求哈希
         uint256 inputsLength = inputs.length;
         bytes32[] memory inputHashes = new bytes32[](inputsLength);
         for (uint256 i = 0; i < inputsLength; ++i) {
@@ -50,25 +50,25 @@ abstract contract RouteSigner is EIP712 {
         }
         bytes32 inputsHash = keccak256(abi.encodePacked(inputHashes));
 
-        // Determine sender for signature verification
+        // 确定用于签名验证的 sender
         address sender = verifySender ? msg.sender : address(0);
 
-        // Construct EIP712 hash
+        // 构造 EIP712 哈希
         bytes32 structHash = keccak256(
             abi.encode(EXECUTE_SIGNED_TYPEHASH, keccak256(commands), inputsHash, intent, data, sender, nonce, deadline)
         );
         bytes32 digest = _hashTypedDataV4(structHash);
 
-        // Recover signer
+        // 恢复签名者
         signer = ECDSA.recover(digest, signature);
 
-        // Check and mark nonce as used (skip if nonce == bytes32(type(uint256).max))
+        // 检查 nonce 并将其标记为已使用（若 nonce == bytes32(type(uint256).max) 则跳过）
         if (nonce != bytes32(type(uint256).max)) {
             if (noncesUsed[signer][nonce]) revert NonceAlreadyUsed();
             noncesUsed[signer][nonce] = true;
         }
 
-        // Store signer, intent, and data in transient storage
+        // 将 signer、intent 和 data 存入瞬态存储
         assembly ('memory-safe') {
             tstore(ROUTE_SIGNER_SLOT, signer)
             tstore(ROUTE_INTENT_SLOT, intent)
@@ -76,7 +76,7 @@ abstract contract RouteSigner is EIP712 {
         }
     }
 
-    /// @dev Clears the signature context from transient storage
+    /// @dev 从瞬态存储中清除签名上下文
     function _resetSignatureContext() internal {
         assembly ('memory-safe') {
             tstore(ROUTE_SIGNER_SLOT, 0)
@@ -85,7 +85,7 @@ abstract contract RouteSigner is EIP712 {
         }
     }
 
-    /// @dev Internal function to read signed route context from transient storage
+    /// @dev 从瞬态存储读取签名路由上下文的内部函数
     function _signedRouteContext() internal view returns (address signer, bytes32 intent, bytes32 data) {
         assembly ('memory-safe') {
             signer := tload(ROUTE_SIGNER_SLOT)

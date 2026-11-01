@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.24;
 
-// Command implementations
+// 命令实现
 import {Dispatcher} from './base/Dispatcher.sol';
 import {RouteSigner} from './base/RouteSigner.sol';
 import {RouterParameters} from './types/RouterParameters.sol';
@@ -31,7 +31,7 @@ contract UniversalRouter is IUniversalRouter, ChainedActions, RouteSigner, Dispa
         _;
     }
 
-    /// @notice To receive ETH from WETH
+    /// @notice 用于从 WETH 接收 ETH
     receive() external payable {
         if (msg.sender != address(WETH9) && msg.sender != address(poolManager)) revert InvalidEthSender();
     }
@@ -56,13 +56,13 @@ contract UniversalRouter is IUniversalRouter, ChainedActions, RouteSigner, Dispa
         bytes calldata signature,
         uint256 deadline
     ) external payable checkDeadline(deadline) {
-        // Set signature context and verify
+        // 设置签名上下文并验证
         _setSignatureContext(commands, inputs, intent, data, verifySender, nonce, signature, deadline);
 
-        // Execute commands
+        // 执行命令
         execute(commands, inputs);
 
-        // Clear signature context
+        // 清除签名上下文
         _resetSignatureContext();
     }
 
@@ -73,7 +73,7 @@ contract UniversalRouter is IUniversalRouter, ChainedActions, RouteSigner, Dispa
         uint256 numCommands = commands.length;
         if (inputs.length != numCommands) revert LengthMismatch();
 
-        // loop through all given commands, execute them and pass along outputs as defined
+        // 遍历所有给定的命令，逐一执行，并按定义传递输出
         for (uint256 commandIndex = 0; commandIndex < numCommands; commandIndex++) {
             bytes1 command = commands[commandIndex];
 

@@ -2,58 +2,58 @@
 pragma solidity ^0.8.24;
 
 struct AcrossV4DepositV3Params {
-    address depositor; // credited depositor
-    address recipient; // destination recipient
-    address inputToken; // ERC20 on origin (WETH if bridging ETH)
-    address outputToken; // ERC20 on destination (or 0x0)
-    uint256 inputAmount; // supports ActionConstants.CONTRACT_BALANCE to use contract's entire balance
+    address depositor; // 被记为存款人的地址
+    address recipient; // 目标链上的接收方
+    address inputToken; // 源链上的 ERC20（跨链桥接 ETH 时为 WETH）
+    address outputToken; // 目标链上的 ERC20（或 0x0）
+    uint256 inputAmount; // 支持 ActionConstants.CONTRACT_BALANCE，以使用合约的全部余额
     uint256 outputAmount;
     uint256 destinationChainId;
-    address exclusiveRelayer; // 0x0 if no exclusivity
+    address exclusiveRelayer; // 无独占时为 0x0
     uint32 quoteTimestamp;
     uint32 fillDeadline;
     uint32 exclusivityDeadline;
     bytes message;
-    bool useNative; // if true, call is payable with value=inputAmount (inputToken must be WETH)
+    bool useNative; // 若为 true，则调用为 payable 且 value=inputAmount（inputToken 必须为 WETH）
 }
 
 interface IUniversalRouter {
-    /// @notice Thrown when a required command has failed
+    /// @notice 当必须成功的命令执行失败时抛出
     error ExecutionFailed(uint256 commandIndex, bytes message);
 
-    /// @notice Thrown when attempting to send ETH directly to the contract
+    /// @notice 当尝试直接向合约发送 ETH 时抛出
     error ETHNotAccepted();
 
-    /// @notice Thrown when executing commands with an expired deadline
+    /// @notice 当以已过期的截止时间执行命令时抛出
     error TransactionDeadlinePassed();
 
-    /// @notice Thrown when attempting to execute commands and an incorrect number of inputs are provided
+    /// @notice 当尝试执行命令但提供的输入参数数量不正确时抛出
     error LengthMismatch();
 
-    // @notice Thrown when an address that isn't WETH tries to send ETH to the router without calldata
+    // @notice 当非 WETH 地址尝试在不带 calldata 的情况下向路由器发送 ETH 时抛出
     error InvalidEthSender();
 
-    /// @notice Executes encoded commands along with provided inputs. Reverts if deadline has expired.
-    /// @param commands A set of concatenated commands, each 1 byte in length
-    /// @param inputs An array of byte strings containing abi encoded inputs for each command
-    /// @param deadline The deadline by which the transaction must be executed
+    /// @notice 使用提供的输入参数执行已编码的命令。若已过截止时间则回滚（revert）。
+    /// @param commands 一组拼接在一起的命令，每条命令长 1 字节
+    /// @param inputs 字节串数组，包含每条命令经 abi 编码的输入参数
+    /// @param deadline 交易必须在此之前执行的截止时间
     function execute(bytes calldata commands, bytes[] calldata inputs, uint256 deadline) external payable;
 
-    /// @notice Executes encoded commands with EIP712 signature verification
-    /// @param commands A set of concatenated commands, each 1 byte in length
-    /// @param inputs An array of byte strings containing abi encoded inputs for each command
-    /// @param intent Application-specific intent identifier
-    /// @param data Application-specific data
-    /// @param verifySender If true, the signature must include msg.sender; if false, uses address(0)
-    /// @param nonce Unordered nonce for replay protection. Use bytes32(type(uint256).max) to skip nonce check
-    /// @param signature EIP712 signature authorizing the execution
-    /// @param deadline The deadline by which the transaction must be executed
-    /// @dev The signer, intent, and data are recovered/stored in transient storage for the duration of execution.
-    /// All commands (including nested sub-commands via EXECUTE_SUB_PLAN) are covered by the signature.
-    /// The signer, intent, and data can be accessed by commands via signedRouteContext().
-    /// External reentrancy is prevented by the isNotLocked modifier on execute(). Internal reentrancy via
-    /// EXECUTE_SUB_PLAN is safe as those sub-commands are part of the signed message. There is no way to change
-    /// the signer mid-execution as executeSigned cannot be called internally.
+    /// @notice 在 EIP712 签名验证下执行已编码的命令
+    /// @param commands 一组拼接在一起的命令，每条命令长 1 字节
+    /// @param inputs 字节串数组，包含每条命令经 abi 编码的输入参数
+    /// @param intent 由应用自定义的意图标识符
+    /// @param data 由应用自定义的数据
+    /// @param verifySender 若为 true，签名必须包含 msg.sender；若为 false，则使用 address(0)
+    /// @param nonce 用于防重放的无序 nonce。使用 bytes32(type(uint256).max) 可跳过 nonce 检查
+    /// @param signature 授权本次执行的 EIP712 签名
+    /// @param deadline 交易必须在此之前执行的截止时间
+    /// @dev signer、intent 和 data 会被恢复/存入瞬态存储（transient storage），在整个执行期间有效。
+    /// 所有命令（包括通过 EXECUTE_SUB_PLAN 嵌套的子命令）都在签名覆盖范围内。
+    /// 命令可通过 signedRouteContext() 访问 signer、intent 和 data。
+    /// 外部重入由 execute() 上的 isNotLocked 修饰器阻止。通过
+    /// EXECUTE_SUB_PLAN 发生的内部重入是安全的，因为这些子命令属于已签名消息的一部分。
+    /// 由于 executeSigned 无法被内部调用，执行过程中不可能更换签名者。
     function executeSigned(
         bytes calldata commands,
         bytes[] calldata inputs,
@@ -65,13 +65,13 @@ interface IUniversalRouter {
         uint256 deadline
     ) external payable;
 
-    /// @notice Returns all signed execution context (signer, intent, data) in a single call
-    /// @return signer The address that signed the current execution, or address(0) if not in a signed execution
-    /// @return intent The intent value from the signed execution, or bytes32(0) if not in a signed execution
-    /// @return data The data value from the signed execution, or bytes32(0) if not in a signed execution
-    /// @dev This reads from transient storage which is only set during executeSigned().
-    /// @dev When consuming this context from a hook, the hook MUST verify that msg.sender is the
-    /// UniversalRouter contract. Otherwise, a malicious contract in the execution chain could abuse the
-    /// legitimate signed context by calling other contracts with it, causing unintended side effects.
+    /// @notice 在一次调用中返回全部签名执行上下文（signer、intent、data）
+    /// @return signer 签署当前执行的地址；若当前不处于签名执行中则为 address(0)
+    /// @return intent 签名执行中的 intent 值；若当前不处于签名执行中则为 bytes32(0)
+    /// @return data 签名执行中的 data 值；若当前不处于签名执行中则为 bytes32(0)
+    /// @dev 此函数读取瞬态存储，而瞬态存储仅在 executeSigned() 执行期间被设置。
+    /// @dev 在 hook 中使用该上下文时，hook 必须验证 msg.sender 是
+    /// UniversalRouter 合约。否则，执行链中的恶意合约可能利用该合法的签名上下文
+    /// 调用其他合约来滥用它，造成非预期的副作用。
     function signedRouteContext() external view returns (address signer, bytes32 intent, bytes32 data);
 }
