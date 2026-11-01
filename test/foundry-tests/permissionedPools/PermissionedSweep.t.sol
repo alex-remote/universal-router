@@ -9,11 +9,11 @@ import {Constants} from '../../../contracts/libraries/Constants.sol';
 import {RouterParameters} from '../../../contracts/types/RouterParameters.sol';
 import {MockERC20} from '../mock/MockERC20.sol';
 
-/// @notice Resolves exactly one address to a fixed underlying, and zero for everything else.
-/// @dev The adapter address is never called, so it does not need to be a contract. Deliberately resolves
-///      address(0) to a non-zero sentinel: a real factory returns zero there, but relying on that would make
-///      ETH sweeps depend on a foreign contract's behaviour, so the dispatcher short-circuits ETH instead.
-///      Any regression in that short-circuit surfaces as a failing ETH sweep here.
+/// @notice 仅将某一个地址解析为固定的底层代币，其他地址一律解析为零地址。
+/// @dev 适配器地址从不会被调用，因此无需是合约。这里有意将
+///      address(0) 解析为一个非零哨兵值：真实的工厂合约在此处会返回零，但依赖这一点会使
+///      ETH 清扫依赖外部合约的行为，因此 Dispatcher 改为对 ETH 直接短路处理。
+///      该短路逻辑若出现任何回归，都会在此处表现为 ETH 清扫失败。
 contract MockPermissionsAdapterFactory {
     address public immutable adapter;
     address public immutable underlying;
@@ -30,8 +30,8 @@ contract MockPermissionsAdapterFactory {
     }
 }
 
-/// @notice Covers Dispatcher's SWEEP adapter-resolution branch, which is unreachable in the rest of the
-///         suite because every other fixture deploys the router with the factory unset.
+/// @notice 覆盖 Dispatcher 中 SWEEP 的适配器解析分支，该分支在测试套件的其余部分中
+///         无法触达，因为其他所有 fixture 在部署路由器时都未设置工厂合约。
 contract PermissionedSweepTest is Test {
     address constant RECIPIENT = address(1234);
     address constant ADAPTER = address(0xADA9741E4);
@@ -56,8 +56,8 @@ contract PermissionedSweepTest is Test {
         router.execute(commands, inputs);
     }
 
-    /// @dev Sweeping the adapter must deliver the underlying the router actually holds. Without the
-    ///      substitution this reads balanceOf(ADAPTER) == 0 and silently transfers nothing.
+    /// @dev 清扫适配器时必须交付路由器实际持有的底层代币。若没有这一
+    ///      替换，这里会读到 balanceOf(ADAPTER) == 0，并静默地什么也不转账。
     function test_sweep_adapterDeliversUnderlying() public {
         underlying.mint(address(router), AMOUNT);
 
@@ -67,7 +67,7 @@ contract PermissionedSweepTest is Test {
         assertEq(underlying.balanceOf(address(router)), 0);
     }
 
-    /// @dev amountMinimum is enforced against the underlying balance, not the adapter's zero balance.
+    /// @dev amountMinimum 针对底层代币的余额进行校验，而非适配器的零余额。
     function test_sweep_adapterRevertsBelowAmountMinimum() public {
         underlying.mint(address(router), AMOUNT);
 
@@ -75,7 +75,7 @@ contract PermissionedSweepTest is Test {
         _sweep(ADAPTER, AMOUNT + 1);
     }
 
-    /// @dev Negative case: a token the factory does not resolve is swept as itself, unchanged.
+    /// @dev 反例：工厂合约无法解析的代币按其自身被清扫，不做替换。
     function test_sweep_nonAdapterTokenUnaffected() public {
         ordinary.mint(address(router), AMOUNT);
 
@@ -84,8 +84,8 @@ contract PermissionedSweepTest is Test {
         assertEq(ordinary.balanceOf(RECIPIENT), AMOUNT);
     }
 
-    /// @dev ETH sweeps must work with a live factory. Constants.ETH is address(0), which the resolution
-    ///      short-circuits before ever reaching the factory.
+    /// @dev 在工厂合约已设置的情况下，ETH 清扫也必须正常工作。Constants.ETH 为 address(0)，解析逻辑
+    ///      会在到达工厂合约之前对其短路。
     function test_sweep_ethWithLiveFactory() public {
         vm.deal(address(router), AMOUNT);
 

@@ -63,14 +63,14 @@ describe('Uniswap UX Tests gas:', () => {
 
     planner = new RoutePlanner()
 
-    // Alice gives bob some tokens
+    // Alice 给 bob 一些代币
     await usdcContract.connect(alice).transfer(bob.address, expandTo6DecimalsBN(10000000))
 
     /*
-      Simple Swap =
+      简单兑换 =
       1000 USDC —V3→ ETH —V3→ DAI
 
-      Complex Swap =
+      复杂兑换 =
       3000 USDC —V3—> ETH — V3—> DAI
       4000 USDC —V3—> USDT —V3—>DAI
       3000 USDC —V2—> DAI
@@ -126,8 +126,8 @@ describe('Uniswap UX Tests gas:', () => {
       details: {
         token: COMPLEX_SWAP.inputAmount.currency.address,
         amount: BigNumber.from(MAX_UINT160),
-        expiration: DEADLINE, // not the end of time, cheaper gas-wise
-        nonce: 0, // this is his first trade
+        expiration: DEADLINE, // 并非无限期，更省 gas
+        nonce: 0, // 这是他的第一笔交易
       },
       spender: router.address,
       sigDeadline: DEADLINE,
@@ -137,8 +137,8 @@ describe('Uniswap UX Tests gas:', () => {
       details: {
         token: SIMPLE_SWAP.inputAmount.currency.address,
         amount: BigNumber.from(SIMPLE_SWAP.inputAmount.quotient.toString()),
-        expiration: 0, // expiration of 0 is block.timestamp
-        nonce: 0, // this is his first trade
+        expiration: 0, // expiration 为 0 即表示 block.timestamp
+        nonce: 0, // 这是他的第一笔交易
       },
       spender: router.address,
       sigDeadline: DEADLINE,
@@ -148,8 +148,8 @@ describe('Uniswap UX Tests gas:', () => {
       details: {
         token: COMPLEX_SWAP.inputAmount.currency.address,
         amount: BigNumber.from(COMPLEX_SWAP.inputAmount.quotient.toString()),
-        expiration: 0, // expiration of 0 is block.timestamp
-        nonce: 0, // this is his first trade
+        expiration: 0, // expiration 为 0 即表示 block.timestamp
+        nonce: 0, // 这是他的第一笔交易
       },
       spender: router.address,
       sigDeadline: DEADLINE,
@@ -193,7 +193,7 @@ describe('Uniswap UX Tests gas:', () => {
 
   describe('Approvals', async () => {
     it('Cost for infinite approval of permit2/swaprouter02 contract', async () => {
-      // Bob max-approves the permit2 contract to access his DAI and WETH
+      // Bob 向 permit2 合约授予最大授权额度，使其可动用他的 DAI 和 WETH
       await snapshotGasCost(await usdcContract.approve(PERMIT2.address, MAX_UINT))
     })
   })
@@ -203,7 +203,7 @@ describe('Uniswap UX Tests gas:', () => {
     let approveSwapRouter02Gas: BigNumber
 
     beforeEach(async () => {
-      // bob has already given his infinite approval of USDC to permit2
+      // bob 已将其 USDC 的无限授权授予 permit2
       const permitApprovalTx = await usdcContract.connect(bob).approve(permit2.address, MAX_UINT)
       const receipt = await permitApprovalTx.wait()
       approvePermit2Gas = receipt.gasUsed
@@ -260,7 +260,7 @@ describe('Uniswap UX Tests gas:', () => {
       })
 
       it('Permit2 Sign Per Swap', async () => {
-        // sign the permit for this swap
+        // 为本次兑换签署 permit
         const sig = await getPermitSignature(COMPLEX_SWAP_PERMIT, bob, permit2)
         planner.addCommand(CommandType.PERMIT2_PERMIT, [COMPLEX_SWAP_PERMIT, sig])
 
@@ -270,7 +270,7 @@ describe('Uniswap UX Tests gas:', () => {
       })
 
       it('Permit2 Max Approval Swap', async () => {
-        // send approval for the total input amount
+        // 为总输入数量发送授权
         const sig = await getPermitSignature(MAX_PERMIT, bob, permit2)
 
         planner.addCommand(CommandType.PERMIT2_PERMIT, [MAX_PERMIT, sig])
@@ -297,15 +297,15 @@ describe('Uniswap UX Tests gas:', () => {
 
         let totalGas = approveSwapRouter02Gas
 
-        // Swap 1 (complex)
+        // 兑换 1（复杂）
         const tx1 = await executeSwapRouter02Swap({ value: '0', calldata: callDataComplex }, bob)
         totalGas = totalGas.add((await tx1.wait()).gasUsed)
 
-        // Swap 2 (complex)
+        // 兑换 2（复杂）
         const tx2 = await executeSwapRouter02Swap({ value: '0', calldata: callDataComplex }, bob)
         totalGas = totalGas.add((await tx2.wait()).gasUsed)
 
-        // Swap 3 (simple)
+        // 兑换 3（简单）
         const tx3 = await executeSwapRouter02Swap({ value: '0', calldata: callDataSimple }, bob)
         totalGas = totalGas.add((await tx3.wait()).gasUsed)
 
@@ -315,7 +315,7 @@ describe('Uniswap UX Tests gas:', () => {
       it('Permit2 Sign Per Swap', async () => {
         let totalGas = approvePermit2Gas
 
-        // Swap 1: complex
+        // 兑换 1：复杂
         let sig = await getPermitSignature(COMPLEX_SWAP_PERMIT, bob, permit2)
         planner.addCommand(CommandType.PERMIT2_PERMIT, [COMPLEX_SWAP_PERMIT, sig])
         let gasUsed = await executeTradeUniversalRouter(planner, COMPLEX_SWAP)
@@ -323,7 +323,7 @@ describe('Uniswap UX Tests gas:', () => {
         totalGas = totalGas.add(gasUsed)
         planner = new RoutePlanner()
 
-        // Swap 2: complex
+        // 兑换 2：复杂
         sig = await getPermitSignature(COMPLEX_SWAP_PERMIT, bob, permit2)
         planner.addCommand(CommandType.PERMIT2_PERMIT, [COMPLEX_SWAP_PERMIT, sig])
         gasUsed = await executeTradeUniversalRouter(planner, COMPLEX_SWAP)
@@ -331,7 +331,7 @@ describe('Uniswap UX Tests gas:', () => {
         totalGas = totalGas.add(gasUsed)
         planner = new RoutePlanner()
 
-        // Swap 3: simple
+        // 兑换 3：简单
         sig = await getPermitSignature(SIMPLE_SWAP_PERMIT, bob, permit2)
         planner.addCommand(CommandType.PERMIT2_PERMIT, [SIMPLE_SWAP_PERMIT, sig])
         gasUsed = await executeTradeUniversalRouter(planner, SIMPLE_SWAP)
@@ -343,7 +343,7 @@ describe('Uniswap UX Tests gas:', () => {
       it('Permit2 Max Approval Swap', async () => {
         let totalGas = approvePermit2Gas
 
-        // Swap 1: complex, but give max approval no more approvals needed
+        // 兑换 1：复杂，但授予最大授权，之后无需再授权
         let sig = await getPermitSignature(MAX_PERMIT, bob, permit2)
         planner.addCommand(CommandType.PERMIT2_PERMIT, [MAX_PERMIT, sig])
         let gasUsed = await executeTradeUniversalRouter(planner, COMPLEX_SWAP)
@@ -351,13 +351,13 @@ describe('Uniswap UX Tests gas:', () => {
         totalGas = totalGas.add(gasUsed)
         planner = new RoutePlanner()
 
-        // Swap 2: complex
+        // 兑换 2：复杂
         gasUsed = await executeTradeUniversalRouter(planner, COMPLEX_SWAP)
 
         totalGas = totalGas.add(gasUsed)
         planner = new RoutePlanner()
 
-        // Swap 3: simple
+        // 兑换 3：简单
         gasUsed = await executeTradeUniversalRouter(planner, SIMPLE_SWAP)
 
         totalGas = totalGas.add(gasUsed)
@@ -381,13 +381,13 @@ describe('Uniswap UX Tests gas:', () => {
 
         let totalGas = approveSwapRouter02Gas
 
-        // Do 5 complex swaps
+        // 执行 5 次复杂兑换
         for (let i = 0; i < 5; i++) {
           const tx = await executeSwapRouter02Swap({ value: '0', calldata: callDataComplex }, bob)
           totalGas = totalGas.add((await tx.wait()).gasUsed)
         }
 
-        // Do 5 simple swaps
+        // 执行 5 次简单兑换
         for (let i = 0; i < 5; i++) {
           const tx = await executeSwapRouter02Swap({ value: '0', calldata: callDataSimple }, bob)
           totalGas = totalGas.add((await tx.wait()).gasUsed)
@@ -401,7 +401,7 @@ describe('Uniswap UX Tests gas:', () => {
         let sig: string
         let gasUsed: BigNumber
 
-        // Do 5 complex swaps
+        // 执行 5 次复杂兑换
         for (let i = 0; i < 5; i++) {
           sig = await getPermitSignature(COMPLEX_SWAP_PERMIT, bob, permit2)
           planner.addCommand(CommandType.PERMIT2_PERMIT, [COMPLEX_SWAP_PERMIT, sig])
@@ -411,7 +411,7 @@ describe('Uniswap UX Tests gas:', () => {
           planner = new RoutePlanner()
         }
 
-        // Do 5 simple swaps
+        // 执行 5 次简单兑换
         for (let i = 0; i < 5; i++) {
           sig = await getPermitSignature(SIMPLE_SWAP_PERMIT, bob, permit2)
           planner.addCommand(CommandType.PERMIT2_PERMIT, [SIMPLE_SWAP_PERMIT, sig])
@@ -428,18 +428,18 @@ describe('Uniswap UX Tests gas:', () => {
         let totalGas = approvePermit2Gas
         let gasUsed: BigNumber
 
-        // The first trade contains a max permit, all others contain no permit
+        // 第一笔交易包含最大额度的 permit，其余交易均不含 permit
         let sig = await getPermitSignature(MAX_PERMIT, bob, permit2)
         planner.addCommand(CommandType.PERMIT2_PERMIT, [MAX_PERMIT, sig])
 
-        // Do 5 complex swaps
+        // 执行 5 次复杂兑换
         for (let i = 0; i < 5; i++) {
           gasUsed = await executeTradeUniversalRouter(planner, COMPLEX_SWAP)
           totalGas = totalGas.add(gasUsed)
           planner = new RoutePlanner()
         }
 
-        // Do 5 simple swaps
+        // 执行 5 次简单兑换
         for (let i = 0; i < 5; i++) {
           gasUsed = await executeTradeUniversalRouter(planner, SIMPLE_SWAP)
           totalGas = totalGas.add(gasUsed)
@@ -466,29 +466,29 @@ describe('Uniswap UX Tests gas:', () => {
 
         let totalGas = approveSwapRouter02Gas
 
-        // Do 5 complex swaps on protocol 1
+        // 在协议 1 上执行 5 次复杂兑换
         for (let i = 0; i < 5; i++) {
           const tx = await executeSwapRouter02Swap({ value: '0', calldata: callDataComplex }, bob)
           totalGas = totalGas.add((await tx.wait()).gasUsed)
         }
 
-        // Launch SwapRouter03
+        // 上线 SwapRouter03
         const router2 = (await deployUniversalRouter(bob.address)).connect(bob) as UniversalRouter
         const router2ApprovalTx = (await approveSwapRouter02(bob, USDC, router2.address))!
         totalGas = totalGas.add(router2ApprovalTx.gasUsed)
 
-        // Do 5 simple swaps on SwapRouter03
+        // 在 SwapRouter03 上执行 5 次简单兑换
         for (let i = 0; i < 5; i++) {
           const tx = await executeSwapRouter02Swap({ value: '0', calldata: callDataSimple }, bob)
           totalGas = totalGas.add((await tx.wait()).gasUsed)
         }
 
-        // Launch SwapRouter04
+        // 上线 SwapRouter04
         const router3 = (await deployUniversalRouter(bob.address)).connect(bob) as UniversalRouter
         const router3ApprovalTx = (await approveSwapRouter02(bob, USDC, router3.address))!
         totalGas = totalGas.add(router3ApprovalTx.gasUsed)
 
-        // Do 5 simple swaps on SwapRouter04
+        // 在 SwapRouter04 上执行 5 次简单兑换
         for (let i = 0; i < 5; i++) {
           const tx = await executeSwapRouter02Swap({ value: '0', calldata: callDataSimple }, bob)
           totalGas = totalGas.add((await tx.wait()).gasUsed)
@@ -502,7 +502,7 @@ describe('Uniswap UX Tests gas:', () => {
         let sig: string
         let gasUsed: BigNumber
 
-        // Do 5 complex swaps
+        // 执行 5 次复杂兑换
         for (let i = 0; i < 5; i++) {
           sig = await getPermitSignature(COMPLEX_SWAP_PERMIT, bob, permit2)
           planner.addCommand(CommandType.PERMIT2_PERMIT, [COMPLEX_SWAP_PERMIT, sig])
@@ -512,10 +512,10 @@ describe('Uniswap UX Tests gas:', () => {
           planner = new RoutePlanner()
         }
 
-        // Launch Universal Router v2
+        // 上线 Universal Router v2
         const router2 = (await deployUniversalRouter(bob.address)).connect(bob) as UniversalRouter
 
-        // Do 5 simple swaps
+        // 执行 5 次简单兑换
         for (let i = 0; i < 5; i++) {
           SIMPLE_SWAP_PERMIT.spender = router2.address
           sig = await getPermitSignature(SIMPLE_SWAP_PERMIT, bob, permit2)
@@ -526,10 +526,10 @@ describe('Uniswap UX Tests gas:', () => {
           planner = new RoutePlanner()
         }
 
-        // Launch Universal Router v3
+        // 上线 Universal Router v3
         const router3 = (await deployUniversalRouter(bob.address)).connect(bob) as UniversalRouter
 
-        // Do 5 simple swaps
+        // 执行 5 次简单兑换
         for (let i = 0; i < 5; i++) {
           SIMPLE_SWAP_PERMIT.spender = router3.address
           sig = await getPermitSignature(SIMPLE_SWAP_PERMIT, bob, permit2)
@@ -547,37 +547,37 @@ describe('Uniswap UX Tests gas:', () => {
         let totalGas = approvePermit2Gas
         let gasUsed: BigNumber
 
-        // The first trade contains a max permit, all others contain no permit
+        // 第一笔交易包含最大额度的 permit，其余交易均不含 permit
         let sig = await getPermitSignature(MAX_PERMIT, bob, permit2)
         planner.addCommand(CommandType.PERMIT2_PERMIT, [MAX_PERMIT, sig])
 
-        // Do 5 complex swaps
+        // 执行 5 次复杂兑换
         for (let i = 0; i < 5; i++) {
           gasUsed = await executeTradeUniversalRouter(planner, COMPLEX_SWAP)
           totalGas = totalGas.add(gasUsed)
           planner = new RoutePlanner()
         }
 
-        // Launch Universal Router v2
+        // 上线 Universal Router v2
         const router2 = (await deployUniversalRouter(bob.address)).connect(bob) as UniversalRouter
         MAX_PERMIT.spender = router2.address
         let calldata2 = await getPermitSignature(MAX_PERMIT, bob, permit2)
         planner.addCommand(CommandType.PERMIT2_PERMIT, [MAX_PERMIT, calldata2])
 
-        // Do 5 simple swaps
+        // 执行 5 次简单兑换
         for (let i = 0; i < 5; i++) {
           gasUsed = await executeTradeUniversalRouter(planner, SIMPLE_SWAP, router2)
           totalGas = totalGas.add(gasUsed)
           planner = new RoutePlanner()
         }
 
-        // Launch Universal Router v3
+        // 上线 Universal Router v3
         const router3 = (await deployUniversalRouter(bob.address)).connect(bob) as UniversalRouter
         MAX_PERMIT.spender = router3.address
         let calldata3 = await getPermitSignature(MAX_PERMIT, bob, permit2)
         planner.addCommand(CommandType.PERMIT2_PERMIT, [MAX_PERMIT, calldata3])
 
-        // Do 5 simple swaps
+        // 执行 5 次简单兑换
         for (let i = 0; i < 5; i++) {
           gasUsed = await executeTradeUniversalRouter(planner, SIMPLE_SWAP, router3)
           totalGas = totalGas.add(gasUsed)

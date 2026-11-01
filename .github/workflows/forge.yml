@@ -23,7 +23,7 @@ jobs:
         with:
           submodules: recursive
 
-    # Must Install node modules for forge to reference in remappings
+    # 必须安装 node 模块，供 forge 在 remappings 中引用
       - uses: actions/setup-node@7c12f8017d5436eb855f1ed4399f037a36fbd9e8 # v2
         with:
           node-version: 22.23.4
@@ -43,7 +43,7 @@ jobs:
             yarn-
       - name: Install dependencies
         run: yarn install --frozen-lockfile
-    # End of node module support
+    # node 模块支持部分结束
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@50d5a8956f2e319df19e6b57539d7e2acb9f8c1e # v1.5.0

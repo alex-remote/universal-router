@@ -117,11 +117,11 @@ describe('UniversalRouter', () => {
     describe('PAY_PORTION_FULL_PRECISION', () => {
       it('pays a portion of router balance with 1e18 precision', async () => {
         const amount = expandTo18DecimalsBN(100)
-        // Transfer DAI to the router first (simulating tokens already in the router)
+        // 先将 DAI 转账给路由器（模拟代币已在路由器中）
         await daiContract.transfer(router.address, amount)
         const balanceBefore = await daiContract.balanceOf(alice.address)
 
-        // Pay 33.333...% (1/3) of balance to alice — impossible with 10_000 bips
+        // 将余额的 33.333...%（1/3）支付给 alice——用 10_000 bips 无法做到
         const oneThird = ethers.BigNumber.from('333333333333333333') // 0.333...e18
         planner.addCommand(CommandType.PAY_PORTION_FULL_PRECISION, [DAI.address, alice.address, oneThird])
         const { commands, inputs } = planner
@@ -162,7 +162,7 @@ describe('UniversalRouter', () => {
         const value = expandTo18DecimalsBN(1)
         planner.addCommand(CommandType.WRAP_ETH, [ADDRESS_THIS, value])
         planner.addCommand(CommandType.UNWRAP_WETH, [ADDRESS_THIS, 0])
-        // Pay 50% of ETH balance
+        // 支付 ETH 余额的 50%
         const halfPortion = ethers.BigNumber.from('500000000000000000') // 0.5e18
         planner.addCommand(CommandType.PAY_PORTION_FULL_PRECISION, [ETH_ADDRESS, alice.address, halfPortion])
         const { commands, inputs } = planner
@@ -173,7 +173,7 @@ describe('UniversalRouter', () => {
         const gasCost = receipt.gasUsed.mul(receipt.effectiveGasPrice)
         const balanceAfter = await ethers.provider.getBalance(alice.address)
 
-        // Sent 1 ETH, got back 0.5 ETH, minus gas
+        // 发送 1 ETH，收回 0.5 ETH，再减去 gas
         const netChange = balanceAfter.sub(balanceBefore).add(gasCost)
         // netChange = received - sent = 0.5 - 1.0 = -0.5
         expect(netChange).to.eq(expandTo18DecimalsBN(1).div(2).sub(value))
@@ -181,7 +181,7 @@ describe('UniversalRouter', () => {
     })
 
     it('reverts if a malicious contract tries to reenter', async () => {
-      // create malicious calldata to sweep ETH out of the router
+      // 构造恶意 calldata，从路由器中清扫出 ETH
       planner.addCommand(CommandType.SWEEP, [ETH_ADDRESS, alice.address, 0])
       let { commands, inputs } = planner
       const sweepCalldata = routerInterface.encodeFunctionData('execute(bytes,bytes[])', [commands, inputs])
@@ -213,7 +213,7 @@ describe('UniversalRouter', () => {
       planner = new RoutePlanner()
     })
 
-    // TODO need to rewrite these tests for non-NFT commands
+    // TODO 需要针对非 NFT 命令重写这些测试
     it('reverts if no commands are allowed to revert')
     it('does not revert if failed command allowed to fail')
   })

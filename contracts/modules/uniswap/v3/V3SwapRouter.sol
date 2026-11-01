@@ -14,7 +14,7 @@ import {UniswapImmutables} from '../UniswapImmutables.sol';
 import {MaxInputAmount} from '../../../libraries/MaxInputAmount.sol';
 import {ERC20} from 'solmate/src/tokens/ERC20.sol';
 
-/// @title Router for Uniswap v3 Trades
+/// @title Uniswap v3 交易路由器
 abstract contract V3SwapRouter is UniswapImmutables, Permit2Payments, IUniswapV3SwapCallback {
     using V3Path for bytes;
     using BytesLib for bytes;
@@ -30,19 +30,19 @@ abstract contract V3SwapRouter is UniswapImmutables, Permit2Payments, IUniswapV3
     error V3TooMuchRequestedPerHop(uint256 hopIndex, uint256 minPrice, uint256 price);
     error V3HopPriceAndPathLengthMismatch();
 
-    /// @dev The minimum value that can be returned from #getSqrtRatioAtTick. Equivalent to getSqrtRatioAtTick(MIN_TICK)
+    /// @dev #getSqrtRatioAtTick 可返回的最小值。等价于 getSqrtRatioAtTick(MIN_TICK)
     uint160 internal constant MIN_SQRT_RATIO = 4295128739;
 
-    /// @dev The maximum value that can be returned from #getSqrtRatioAtTick. Equivalent to getSqrtRatioAtTick(MAX_TICK)
+    /// @dev #getSqrtRatioAtTick 可返回的最大值。等价于 getSqrtRatioAtTick(MAX_TICK)
     uint160 internal constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342;
 
     function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata data) external {
-        if (amount0Delta <= 0 && amount1Delta <= 0) revert V3InvalidSwap(); // swaps entirely within 0-liquidity regions are not supported
+        if (amount0Delta <= 0 && amount1Delta <= 0) revert V3InvalidSwap(); // 不支持完全处于零流动性区间内的兑换
         (, address payer, uint256[] memory minHopPriceX36, uint256 hopIndex) =
             abi.decode(data, (bytes, address, uint256[], uint256));
         bytes calldata path = data.toBytes(0);
 
-        // because exact output swaps are executed in reverse order, in this case tokenOut is actually tokenIn
+        // 由于精确输出兑换按逆序执行，此时 tokenOut 实际上是 tokenIn
         (address tokenIn, uint24 fee, address tokenOut) = path.decodeFirstPool();
 
         if (computePoolAddress(tokenIn, tokenOut, fee) != msg.sender) revert V3InvalidCaller();
@@ -51,19 +51,19 @@ abstract contract V3SwapRouter is UniswapImmutables, Permit2Payments, IUniswapV3
             amount0Delta > 0 ? (tokenIn < tokenOut, uint256(amount0Delta)) : (tokenOut < tokenIn, uint256(amount1Delta));
 
         if (isExactInput) {
-            // Pay the pool (msg.sender)
+            // 向池（msg.sender）付款
             payOrPermit2Transfer(tokenIn, payer, msg.sender, amountToPay);
         } else {
-            // either initiate the next swap or pay
+            // 要么发起下一次兑换，要么付款
             if (path.hasMultiplePools()) {
-                // Per-hop price check for exact-output intermediate hops
+                // 对精确输出的中间跳进行逐跳价格检查
                 if (minHopPriceX36.length != 0) {
                     uint256 amountOut = uint256(-(amount0Delta > 0 ? amount1Delta : amount0Delta));
                     uint256 price = amountOut * Constants.PRICE_PRECISION / amountToPay;
                     uint256 minPrice = minHopPriceX36[hopIndex];
                     if (price < minPrice) revert V3TooMuchRequestedPerHop(hopIndex, minPrice, price);
                 }
-                // this is an intermediate step so the payer is actually this contract
+                // 这是中间步骤，因此付款方实际上是本合约
                 path = path.skipToken();
                 _swap(
                     -amountToPay.toInt256(),
@@ -76,26 +76,26 @@ abstract contract V3SwapRouter is UniswapImmutables, Permit2Payments, IUniswapV3
                 );
             } else {
                 if (amountToPay > MaxInputAmount.get()) revert V3TooMuchRequested();
-                // Per-hop price check for the first trading hop (last executed in exact-output)
+                // 对第一个交易跳进行逐跳价格检查（在精确输出中最后执行）
                 if (minHopPriceX36.length != 0) {
                     uint256 amountOut = uint256(-(amount0Delta > 0 ? amount1Delta : amount0Delta));
                     uint256 price = amountOut * Constants.PRICE_PRECISION / amountToPay;
                     uint256 minPrice = minHopPriceX36[hopIndex];
                     if (price < minPrice) revert V3TooMuchRequestedPerHop(hopIndex, minPrice, price);
                 }
-                // note that because exact output swaps are executed in reverse order, tokenOut is actually tokenIn
+                // 注意：由于精确输出兑换按逆序执行，tokenOut 实际上是 tokenIn
                 payOrPermit2Transfer(tokenOut, payer, msg.sender, amountToPay);
             }
         }
     }
 
-    /// @notice Performs a Uniswap v3 exact input swap
-    /// @param recipient The recipient of the output tokens
-    /// @param amountIn The amount of input tokens for the trade
-    /// @param amountOutMinimum The minimum desired amount of output tokens
-    /// @param path The path of the trade as a bytes string
-    /// @param payer The address that will be paying the input
-    /// @param minHopPriceX36 Per-hop minimum price array in 1e36 precision (empty to disable)
+    /// @notice 执行 Uniswap v3 精确输入兑换
+    /// @param recipient 输出代币的接收方
+    /// @param amountIn 本次交易的输入代币数量
+    /// @param amountOutMinimum 期望获得的最小输出代币数量
+    /// @param path 以字节串表示的交易路径
+    /// @param payer 将支付输入代币的地址
+    /// @param minHopPriceX36 以 1e36 精度表示的逐跳最低价格数组（为空则禁用）
     function v3SwapExactInput(
         address recipient,
         uint256 amountIn,
@@ -104,14 +104,14 @@ abstract contract V3SwapRouter is UniswapImmutables, Permit2Payments, IUniswapV3
         address payer,
         uint256[] calldata minHopPriceX36
     ) internal {
-        // Validate hop price array length
-        // V3 path: token(20) + [fee(3) + token(20)] * numHops => path.length = (minHopPriceX36.length * 23) + 20
+        // 校验逐跳价格数组的长度
+        // V3 路径：token(20) + [fee(3) + token(20)] * numHops => path.length = (minHopPriceX36.length * 23) + 20
         if (
             minHopPriceX36.length != 0
                 && path.length != (minHopPriceX36.length * Constants.NEXT_V3_POOL_OFFSET) + Constants.ADDR_SIZE
         ) revert V3HopPriceAndPathLengthMismatch();
 
-        // use amountIn == ActionConstants.CONTRACT_BALANCE as a flag to swap the entire balance of the contract
+        // 以 amountIn == ActionConstants.CONTRACT_BALANCE 作为标志，表示兑换本合约的全部余额
         if (amountIn == ActionConstants.CONTRACT_BALANCE) {
             address tokenIn = path.decodeFirstToken();
             amountIn = ERC20(tokenIn).balanceOf(address(this));
@@ -124,27 +124,27 @@ abstract contract V3SwapRouter is UniswapImmutables, Permit2Payments, IUniswapV3
         while (true) {
             bool hasMultiplePools = path.hasMultiplePools();
 
-            // the outputs of prior swaps become the inputs to subsequent ones
+            // 前一次兑换的输出成为后续兑换的输入
             (int256 amount0Delta, int256 amount1Delta, bool zeroForOne) = _swap(
                 amountIn.toInt256(),
-                hasMultiplePools ? address(this) : recipient, // for intermediate swaps, this contract custodies
-                path.getFirstPool(), // only the first pool is needed
-                payer, // for intermediate swaps, this contract custodies
+                hasMultiplePools ? address(this) : recipient, // 对于中间兑换，由本合约托管
+                path.getFirstPool(), // 只需要第一个池
+                payer, // 对于中间兑换，由本合约托管
                 true,
-                emptyHopPrice, // exact-in callbacks don't need price checks
+                emptyHopPrice, // 精确输入的回调无需价格检查
                 0
             );
 
             amountIn = uint256(-(zeroForOne ? amount1Delta : amount0Delta));
 
-            // Per-hop price check for exact-input
+            // 精确输入的逐跳价格检查
             if (minHopPriceX36.length != 0) {
                 uint256 price = amountIn * Constants.PRICE_PRECISION / previousAmountIn;
                 uint256 minPrice = minHopPriceX36[hopIndex];
                 if (price < minPrice) revert V3TooLittleReceivedPerHop(hopIndex, minPrice, price);
             }
 
-            // decide whether to continue or terminate
+            // 决定继续还是终止
             if (hasMultiplePools) {
                 payer = address(this);
                 path = path.skipToken();
@@ -159,13 +159,13 @@ abstract contract V3SwapRouter is UniswapImmutables, Permit2Payments, IUniswapV3
         if (amountOut < amountOutMinimum) revert V3TooLittleReceived();
     }
 
-    /// @notice Performs a Uniswap v3 exact output swap
-    /// @param recipient The recipient of the output tokens
-    /// @param amountOut The amount of output tokens to receive for the trade
-    /// @param amountInMaximum The maximum desired amount of input tokens
-    /// @param path The path of the trade as a bytes string
-    /// @param payer The address that will be paying the input
-    /// @param minHopPriceX36 Per-hop minimum price array in 1e36 precision (empty to disable)
+    /// @notice 执行 Uniswap v3 精确输出兑换
+    /// @param recipient 输出代币的接收方
+    /// @param amountOut 本次交易要获得的输出代币数量
+    /// @param amountInMaximum 期望支付的最大输入代币数量
+    /// @param path 以字节串表示的交易路径
+    /// @param payer 将支付输入代币的地址
+    /// @param minHopPriceX36 以 1e36 精度表示的逐跳最低价格数组（为空则禁用）
     function v3SwapExactOutput(
         address recipient,
         uint256 amountOut,
@@ -174,22 +174,22 @@ abstract contract V3SwapRouter is UniswapImmutables, Permit2Payments, IUniswapV3
         address payer,
         uint256[] calldata minHopPriceX36
     ) internal {
-        // Validate hop price array length
-        // V3 path: token(20) + [fee(3) + token(20)] * numHops => path.length = (minHopPriceX36.length * 23) + 20
+        // 校验逐跳价格数组的长度
+        // V3 路径：token(20) + [fee(3) + token(20)] * numHops => path.length = (minHopPriceX36.length * 23) + 20
         if (
             minHopPriceX36.length != 0
                 && path.length != (minHopPriceX36.length * Constants.NEXT_V3_POOL_OFFSET) + Constants.ADDR_SIZE
         ) revert V3HopPriceAndPathLengthMismatch();
 
-        // Convert calldata to memory for abi.encode in _swap
+        // 将 calldata 转为 memory，以便在 _swap 中进行 abi.encode
         uint256[] memory minHopPriceX36Memory = minHopPriceX36;
 
         MaxInputAmount.set(amountInMaximum);
 
-        // For exact-output, the first _swap handles the LAST trading hop.
-        // Trading direction: hop 0 (A->B), hop 1 (B->C), ...
-        // Execution: last hop first, then callbacks handle earlier hops.
-        // So start hopIndex at minHopPriceX36Memory.length - 1 and decrement in callbacks.
+        // 对于精确输出，第一次 _swap 处理的是“最后一个”交易跳。
+        // 交易方向：跳 0（A->B），跳 1（B->C），...
+        // 执行顺序：先执行最后一跳，再由回调处理更早的跳。
+        // 因此 hopIndex 从 minHopPriceX36Memory.length - 1 开始，并在回调中递减。
         uint256 startHopIndex = minHopPriceX36Memory.length > 0 ? minHopPriceX36Memory.length - 1 : 0;
 
         (int256 amount0Delta, int256 amount1Delta, bool zeroForOne) =
@@ -202,8 +202,8 @@ abstract contract V3SwapRouter is UniswapImmutables, Permit2Payments, IUniswapV3
         MaxInputAmount.set(0);
     }
 
-    /// @dev Performs a single swap for both exactIn and exactOut
-    /// For exactIn, `amount` is `amountIn`. For exactOut, `amount` is `-amountOut`
+    /// @dev 为 exactIn 和 exactOut 两种情况执行单次兑换
+    /// 对于 exactIn，`amount` 为 `amountIn`；对于 exactOut，`amount` 为 `-amountOut`
     function _swap(
         int256 amount,
         address recipient,

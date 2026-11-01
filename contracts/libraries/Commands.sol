@@ -2,16 +2,16 @@
 pragma solidity ^0.8.24;
 
 /// @title Commands
-/// @notice Command Flags used to decode commands
+/// @notice 用于解码命令的命令标志位
 library Commands {
-    // Masks to extract certain bits of commands
+    // 用于提取命令中特定位的掩码
     bytes1 internal constant FLAG_ALLOW_REVERT = 0x80;
     bytes1 internal constant COMMAND_TYPE_MASK = 0x7f;
 
-    // Command Types. Maximum supported command at this moment is 0x3f.
-    // The commands are executed in nested if blocks to minimise gas consumption
+    // 命令类型。目前支持的最大命令为 0x3f。
+    // 命令在嵌套的 if 块中执行，以尽量减少 gas 消耗
 
-    // Command Types where value<=0x07, executed in the first nested-if block
+    // value<=0x07 的命令类型，在第一个嵌套 if 块中执行
     uint256 constant V3_SWAP_EXACT_IN = 0x00;
     uint256 constant V3_SWAP_EXACT_OUT = 0x01;
     uint256 constant PERMIT2_TRANSFER_FROM = 0x02;
@@ -21,7 +21,7 @@ library Commands {
     uint256 constant PAY_PORTION = 0x06;
     uint256 constant PAY_PORTION_FULL_PRECISION = 0x07;
 
-    // Command Types where 0x08<=value<=0x0f, executed in the second nested-if block
+    // 0x08<=value<=0x0f 的命令类型，在第二个嵌套 if 块中执行
     uint256 constant V2_SWAP_EXACT_IN = 0x08;
     uint256 constant V2_SWAP_EXACT_OUT = 0x09;
     uint256 constant PERMIT2_PERMIT = 0x0a;
@@ -31,7 +31,7 @@ library Commands {
     uint256 constant BALANCE_CHECK_ERC20 = 0x0e;
     // COMMAND_PLACEHOLDER = 0x0f;
 
-    // Command Types where 0x10<=value<=0x20, executed in the third nested-if block
+    // 0x10<=value<=0x20 的命令类型，在第三个嵌套 if 块中执行
     uint256 constant V4_SWAP = 0x10;
     uint256 constant V3_POSITION_MANAGER_PERMIT = 0x11;
     uint256 constant V3_POSITION_MANAGER_CALL = 0x12;
@@ -39,11 +39,11 @@ library Commands {
     uint256 constant V4_POSITION_MANAGER_CALL = 0x14;
     // COMMAND_PLACEHOLDER = 0x15 -> 0x20
 
-    // Command Types where 0x21<=value<=0x3f
+    // 0x21<=value<=0x3f 的命令类型
     uint256 constant EXECUTE_SUB_PLAN = 0x21;
-    // COMMAND_PLACEHOLDER for 0x22 to 0x3f
+    // COMMAND_PLACEHOLDER，用于 0x22 至 0x3f
 
-    // Command Types where 0x40<=value<=0x5f
-    // Reserved for 3rd party integrations
+    // 0x40<=value<=0x5f 的命令类型
+    // 预留给第三方集成
     uint256 constant ACROSS_V4_DEPOSIT_V3 = 0x40;
 }

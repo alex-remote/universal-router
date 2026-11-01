@@ -65,7 +65,7 @@ describe('V3 to V4 Migration Gas Tests', () => {
     planner = new RoutePlanner()
     v4Planner = new V4Planner()
 
-    // alice gives bob some tokens
+    // alice 给 bob 一些代币
     await daiContract.connect(alice).transfer(bob.address, expandTo18DecimalsBN(100000))
     await wethContract.connect(alice).transfer(bob.address, expandTo18DecimalsBN(100))
     await usdcContract.connect(alice).transfer(bob.address, expandTo6DecimalsBN(100000))
@@ -73,11 +73,11 @@ describe('V3 to V4 Migration Gas Tests', () => {
 
   describe('V3 Commands', () => {
     beforeEach(async () => {
-      // Bob max-approves the v3PM to access his USDC and WETH
+      // Bob 向 v3PM 授予最大授权额度，使其可动用他的 USDC 和 WETH
       await usdcContract.connect(bob).approve(v3NFTPositionManager.address, MAX_UINT)
       await wethContract.connect(bob).approve(v3NFTPositionManager.address, MAX_UINT)
 
-      // need to mint the nft to bob
+      // 需要将该 NFT 铸造给 bob
       const tx = await v3NFTPositionManager.mint({
         token0: USDC.address,
         token1: WETH.address,
@@ -122,7 +122,7 @@ describe('V3 to V4 Migration Gas Tests', () => {
     })
     describe('decrease liquidity', () => {
       it('gas: erc721permit + decreaseLiquidity', async () => {
-        // first we need to permit the router to spend the nft
+        // 首先需要 permit 路由器动用该 NFT
         const { v, r, s } = await getPermitNFTSignature(bob, v3NFTPositionManager, router.address, tokenIdv3, MAX_UINT)
         const erc721PermitParams = {
           spender: router.address,
@@ -158,7 +158,7 @@ describe('V3 to V4 Migration Gas Tests', () => {
     })
     describe('collect', () => {
       it('gas: erc721permit + decreaseLiquidity + collect', async () => {
-        // first we need to permit the router to spend the nft
+        // 首先需要 permit 路由器动用该 NFT
         let { v, r, s } = await getPermitNFTSignature(bob, v3NFTPositionManager, router.address, tokenIdv3, MAX_UINT)
         const erc721PermitParams = {
           spender: router.address,
@@ -205,7 +205,7 @@ describe('V3 to V4 Migration Gas Tests', () => {
 
     describe('burn', () => {
       it('gas: erc721permit + decreaseLiquidity + collect + burn', async () => {
-        // first we need to permit the router to spend the nft
+        // 首先需要 permit 路由器动用该 NFT
         let { v, r, s } = await getPermitNFTSignature(bob, v3NFTPositionManager, router.address, tokenIdv3, MAX_UINT)
         const erc721PermitParams = {
           spender: router.address,
@@ -266,7 +266,7 @@ describe('V3 to V4 Migration Gas Tests', () => {
 
     describe('mint', () => {
       it('gas: mint', async () => {
-        // transfer to v4posm
+        // 转账给 v4posm
         await usdcContract.connect(bob).transfer(v4PositionManager.address, expandTo6DecimalsBN(100000))
         await wethContract.connect(bob).transfer(v4PositionManager.address, expandTo18DecimalsBN(100))
 
@@ -297,13 +297,13 @@ describe('V3 to V4 Migration Gas Tests', () => {
       })
 
       it('gas: migrate and mint', async () => {
-        // Bob max-approves the v3PM to access his USDC and WETH
+        // Bob 向 v3PM 授予最大授权额度，使其可动用他的 USDC 和 WETH
         await usdcContract.connect(bob).approve(v3NFTPositionManager.address, MAX_UINT)
         await wethContract.connect(bob).approve(v3NFTPositionManager.address, MAX_UINT)
 
         await v4PositionManager.connect(bob).initializePool(USDC_WETH.poolKey, USDC_WETH.price)
 
-        // mint the nft to bob on v3
+        // 在 V3 上将该 NFT 铸造给 bob
         const tx = await v3NFTPositionManager.mint({
           token0: USDC.address,
           token1: WETH.address,
@@ -322,7 +322,7 @@ describe('V3 to V4 Migration Gas Tests', () => {
         const transferEvent = receipt.events?.find((event) => event.event === 'IncreaseLiquidity')
         let tokenIdv3 = transferEvent?.args?.tokenId
 
-        // permit, decrease, collect, burn
+        // permit、减少流动性、收取、销毁
         let { v, r, s } = await getPermitNFTSignature(bob, v3NFTPositionManager, router.address, tokenIdv3, MAX_UINT)
         const erc721PermitParams = {
           spender: router.address,
@@ -350,7 +350,7 @@ describe('V3 to V4 Migration Gas Tests', () => {
 
         const encodedDecreaseCall = encodeDecreaseLiquidity(decreaseParams)
 
-        // set receiver to v4posm
+        // 将接收方设为 v4posm
         const collectParams = {
           tokenId: tokenIdv3,
           recipient: v4PositionManager.address,
@@ -391,13 +391,13 @@ describe('V3 to V4 Migration Gas Tests', () => {
       })
 
       it('gas: migrate weth position into eth position with forwarding', async () => {
-        // Bob max-approves the v3PM to access his USDC and WETH
+        // Bob 向 v3PM 授予最大授权额度，使其可动用他的 USDC 和 WETH
         await usdcContract.connect(bob).approve(v3NFTPositionManager.address, MAX_UINT)
         await wethContract.connect(bob).approve(v3NFTPositionManager.address, MAX_UINT)
 
         await v4PositionManager.connect(bob).initializePool(ETH_USDC.poolKey, USDC_WETH.price)
 
-        // mint the nft to bob on v3
+        // 在 V3 上将该 NFT 铸造给 bob
         const tx = await v3NFTPositionManager.mint({
           token0: USDC.address,
           token1: WETH.address,
@@ -416,7 +416,7 @@ describe('V3 to V4 Migration Gas Tests', () => {
         const transferEvent = receipt.events?.find((event) => event.event === 'IncreaseLiquidity')
         let tokenIdv3 = transferEvent?.args?.tokenId
 
-        // permit, decrease, collect, burn
+        // permit、减少流动性、收取、销毁
         let { v, r, s } = await getPermitNFTSignature(bob, v3NFTPositionManager, router.address, tokenIdv3, MAX_UINT)
         const erc721PermitParams = {
           spender: router.address,
@@ -444,7 +444,7 @@ describe('V3 to V4 Migration Gas Tests', () => {
 
         const encodedDecreaseCall = encodeDecreaseLiquidity(decreaseParams)
 
-        // set receiver to v4posm
+        // 将接收方设为 v4posm
         const collectParams = {
           tokenId: tokenIdv3,
           recipient: router.address,

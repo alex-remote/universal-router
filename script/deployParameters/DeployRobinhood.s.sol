@@ -14,7 +14,7 @@ contract DeployRobinhood is DeployUniversalRouter {
             pairInitCodeHash: 0x96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f,
             poolInitCodeHash: 0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54,
             v4PoolManager: 0x8366a39CC670B4001A1121B8F6A443A643e40951,
-            permissionsAdapterFactory: address(0), // ToDo: Add permissions adapter factory
+            permissionsAdapterFactory: address(0), // ToDo: 添加 permissions adapter factory
             v3NFTPositionManager: 0x73991a25C818Bf1f1128dEAaB1492D45638DE0D3,
             v4PositionManager: 0x58daec3116aae6D93017bAAea7749052E8a04fA7,
             spokePool: 0xD29C85F15DF544bA632C9E25829fd29d767d7978

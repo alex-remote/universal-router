@@ -2,7 +2,7 @@ import { defaultAbiCoder } from 'ethers/lib/utils'
 
 /**
  * CommandTypes
- * @description Flags that modify a command's execution
+ * @description 修改命令执行方式的标志
  * @enum {number}
  */
 export enum CommandType {
@@ -52,22 +52,22 @@ const PERMIT2_TRANSFER_FROM_STRUCT = '(address from,address to,uint160 amount,ad
 const PERMIT2_TRANSFER_FROM_BATCH_STRUCT = PERMIT2_TRANSFER_FROM_STRUCT + '[]'
 
 const ABI_DEFINITION: { [key in CommandType]: string[] } = {
-  // Batch Reverts
+  // 批量回滚（revert）
   [CommandType.EXECUTE_SUB_PLAN]: ['bytes', 'bytes[]'],
 
-  // Permit2 Actions
+  // Permit2 操作
   [CommandType.PERMIT2_PERMIT]: [PERMIT_STRUCT, 'bytes'],
   [CommandType.PERMIT2_PERMIT_BATCH]: [PERMIT_BATCH_STRUCT, 'bytes'],
   [CommandType.PERMIT2_TRANSFER_FROM]: ['address', 'address', 'uint160'],
   [CommandType.PERMIT2_TRANSFER_FROM_BATCH]: [PERMIT2_TRANSFER_FROM_BATCH_STRUCT],
 
-  // Uniswap Actions
+  // Uniswap 操作
   [CommandType.V3_SWAP_EXACT_IN]: ['address', 'uint256', 'uint256', 'bytes', 'bool', 'uint256[]'],
   [CommandType.V3_SWAP_EXACT_OUT]: ['address', 'uint256', 'uint256', 'bytes', 'bool', 'uint256[]'],
   [CommandType.V2_SWAP_EXACT_IN]: ['address', 'uint256', 'uint256', 'address[]', 'bool', 'uint256[]'],
   [CommandType.V2_SWAP_EXACT_OUT]: ['address', 'uint256', 'uint256', 'address[]', 'bool', 'uint256[]'],
 
-  // Token Actions and Checks
+  // 代币操作与检查
   [CommandType.WRAP_ETH]: ['address', 'uint256'],
   [CommandType.UNWRAP_WETH]: ['address', 'uint256'],
   [CommandType.SWEEP]: ['address', 'address', 'uint256'],

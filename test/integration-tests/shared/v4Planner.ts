@@ -2,12 +2,12 @@ import { defaultAbiCoder } from 'ethers/lib/utils'
 
 /**
  * Actions
- * @description Constants that define what action to perform
+ * @description 定义要执行何种操作的常量
  * @enum {number}
  */
 export enum Actions {
-  // pool actions
-  // liquidity actions
+  // 池操作
+  // 流动性操作
   INCREASE_LIQUIDITY = 0x00,
   DECREASE_LIQUIDITY = 0x01,
   MINT_POSITION = 0x02,
@@ -15,20 +15,20 @@ export enum Actions {
   INCREASE_LIQUIDITY_FROM_DELTAS = 0x04,
   MINT_POSITION_FROM_DELTAS = 0x05,
 
-  // swapping
+  // 兑换
   SWAP_EXACT_IN_SINGLE = 0x06,
   SWAP_EXACT_IN = 0x07,
   SWAP_EXACT_OUT_SINGLE = 0x08,
   SWAP_EXACT_OUT = 0x09,
-  // donate
+  // 捐赠
   // DONATE = 0x0a,
 
-  // closing deltas on the pool manager
-  // settling
+  // 在 pool manager 上结清差额（delta）
+  // 结算（settle）
   SETTLE = 0x0b,
   SETTLE_ALL = 0x0c,
   // SETTLE_PAIR = 0x0d,
-  // taking
+  // 提取（take）
   TAKE = 0x0e,
   TAKE_ALL = 0x0f,
   TAKE_PORTION = 0x10,
@@ -41,7 +41,7 @@ export enum Actions {
   WRAP = 0x15,
   UNWRAP = 0x16,
 
-  // minting/burning 6909s to close deltas
+  // 铸造/销毁 6909 代币以结清差额（delta）
   // MINT_6909 = 0x17,
   // BURN_6909 = 0x18,
 }
@@ -71,7 +71,7 @@ const SWAP_EXACT_OUT_STRUCT =
   '[] path,uint256[] minHopPriceX36,uint128 amountOut,uint128 amountInMaximum)'
 
 const ABI_DEFINITION: { [key in Actions]: string[] } = {
-  // Liquidity commands
+  // 流动性命令
   [Actions.INCREASE_LIQUIDITY]: ['uint256', 'uint256', 'uint128', 'uint128', 'bytes'],
   [Actions.DECREASE_LIQUIDITY]: ['uint256', 'uint256', 'uint128', 'uint128', 'bytes'],
   [Actions.MINT_POSITION]: [POOL_KEY_STRUCT, 'int24', 'int24', 'uint256', 'uint128', 'uint128', 'address', 'bytes'],
@@ -79,13 +79,13 @@ const ABI_DEFINITION: { [key in Actions]: string[] } = {
   [Actions.INCREASE_LIQUIDITY_FROM_DELTAS]: ['uint256', 'uint128', 'uint128', 'bytes'],
   [Actions.MINT_POSITION_FROM_DELTAS]: [POOL_KEY_STRUCT, 'int24', 'int24', 'uint128', 'uint128', 'address', 'bytes'],
 
-  // Swapping commands
+  // 兑换命令
   [Actions.SWAP_EXACT_IN_SINGLE]: [SWAP_EXACT_IN_SINGLE_STRUCT],
   [Actions.SWAP_EXACT_IN]: [SWAP_EXACT_IN_STRUCT],
   [Actions.SWAP_EXACT_OUT_SINGLE]: [SWAP_EXACT_OUT_SINGLE_STRUCT],
   [Actions.SWAP_EXACT_OUT]: [SWAP_EXACT_OUT_STRUCT],
 
-  // Payments commands
+  // 支付命令
   [Actions.SETTLE]: ['address', 'uint256', 'bool'],
   [Actions.SETTLE_ALL]: ['address', 'uint256'],
   [Actions.TAKE]: ['address', 'address', 'uint256'],

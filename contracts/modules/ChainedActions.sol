@@ -22,7 +22,7 @@ abstract contract ChainedActions is Payments {
         uint256 inputAmount = params.inputAmount;
         uint256 callValue = 0;
 
-        // Resolve sentinel value for inputAmount
+        // 解析 inputAmount 的哨兵值
         if (inputAmount == ActionConstants.CONTRACT_BALANCE) {
             if (params.useNative) {
                 inputAmount = address(this).balance;
@@ -32,11 +32,11 @@ abstract contract ChainedActions is Payments {
         }
 
         if (params.useNative) {
-            // Require ETH path to use WETH as inputToken per Across docs.
-            // Router must currently hold ETH equal to inputAmount.
+            // 按 Across 文档要求，ETH 路径须以 WETH 作为 inputToken。
+            // 路由器当前必须持有与 inputAmount 等量的 ETH。
             callValue = inputAmount;
         } else {
-            // Approve SpokePool to pull ERC20 from router
+            // 授权 SpokePool 从路由器拉取 ERC20
             IERC20(params.inputToken).forceApprove(address(SPOKE_POOL), inputAmount);
         }
 

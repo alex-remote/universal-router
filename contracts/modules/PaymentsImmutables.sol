@@ -10,10 +10,10 @@ struct PaymentsParameters {
 }
 
 contract PaymentsImmutables {
-    /// @notice WETH9 address
+    /// @notice WETH9 地址
     IWETH9 internal immutable WETH9;
 
-    /// @notice Permit2 address
+    /// @notice Permit2 地址
     IPermit2 internal immutable PERMIT2;
 
     constructor(PaymentsParameters memory params) {

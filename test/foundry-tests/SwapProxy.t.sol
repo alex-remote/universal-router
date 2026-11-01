@@ -46,11 +46,11 @@ contract SwapProxyTest is Test {
         router = new UniversalRouter(params);
         proxy = new SwapProxy();
 
-        // Create mock tokens and V2 pair
+        // 创建 mock 代币和 V2 交易对
         tokenA = new MockERC20();
         tokenB = new MockERC20();
 
-        // Ensure tokenA < tokenB for consistent ordering
+        // 确保 tokenA < tokenB，以保持排序一致
         if (address(tokenA) > address(tokenB)) {
             (tokenA, tokenB) = (tokenB, tokenA);
         }
@@ -60,7 +60,7 @@ contract SwapProxyTest is Test {
         tokenB.mint(pair, 100 ether);
         IUniswapV2Pair(pair).sync();
 
-        // Fund user and approve proxy (NOT Permit2)
+        // 为用户注资并授权给代理合约（而非 Permit2）
         vm.startPrank(USER);
         tokenA.mint(USER, BALANCE);
         tokenB.mint(USER, BALANCE);
@@ -74,7 +74,7 @@ contract SwapProxyTest is Test {
         path[0] = address(tokenA);
         path[1] = address(tokenB);
         bytes[] memory inputs = new bytes[](1);
-        // payerIsUser=false, recipient=USER (explicit address, not MSG_SENDER)
+        // payerIsUser=false，recipient=USER（显式地址，而非 MSG_SENDER）
         inputs[0] = abi.encode(USER, AMOUNT, 0, path, false, new uint256[](0));
 
         uint256 balanceBefore = tokenB.balanceOf(USER);
@@ -88,7 +88,7 @@ contract SwapProxyTest is Test {
     }
 
     function testExactOutputViaProxyWithSweep() public {
-        uint256 maxIn = 2 ether; // overfund to test sweep
+        uint256 maxIn = 2 ether; // 多付资金以测试清扫
         uint256 desiredOut = AMOUNT;
 
         bytes memory commands =
@@ -97,9 +97,9 @@ contract SwapProxyTest is Test {
         path[0] = address(tokenA);
         path[1] = address(tokenB);
         bytes[] memory inputs = new bytes[](2);
-        // payerIsUser=false, recipient=USER
+        // payerIsUser=false，recipient=USER
         inputs[0] = abi.encode(USER, desiredOut, maxIn, path, false, new uint256[](0));
-        // sweep leftover tokenA back to USER
+        // 将剩余的 tokenA 清扫回 USER
         inputs[1] = abi.encode(address(tokenA), USER, 0);
 
         uint256 tokenABefore = tokenA.balanceOf(USER);
@@ -109,16 +109,16 @@ contract SwapProxyTest is Test {
             IUniversalRouter(address(router)), address(tokenA), maxIn, commands, inputs, block.timestamp + 1000
         );
 
-        // User received exact output
+        // 用户收到了精确输出的数量
         assertGe(tokenB.balanceOf(USER), tokenBBefore + desiredOut);
-        // User paid less than maxIn (excess swept back)
+        // 用户支付的数量少于 maxIn（多余部分已清扫退回）
         assertGt(tokenA.balanceOf(USER), tokenABefore - maxIn);
-        // No tokens stuck in the router
+        // 没有代币滞留在路由器中
         assertEq(tokenA.balanceOf(address(router)), 0);
     }
 
     function testRevertOnInsufficientApproval() public {
-        // Revoke approval
+        // 撤销授权
         ERC20(address(tokenA)).approve(address(proxy), 0);
 
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.V2_SWAP_EXACT_IN)));
@@ -158,15 +158,15 @@ contract SwapProxyTest is Test {
             IUniversalRouter(address(router)), address(tokenA), AMOUNT, commands, inputs, block.timestamp + 1000
         );
 
-        // Proxy should never hold tokens
+        // 代理合约永远不应持有代币
         assertEq(tokenA.balanceOf(address(proxy)), 0);
         assertEq(tokenB.balanceOf(address(proxy)), 0);
-        // Router should not hold tokens either
+        // 路由器也不应持有代币
         assertEq(tokenA.balanceOf(address(router)), 0);
     }
 
     function testGasComparisonDirectVsProxy() public {
-        // Setup: also approve Permit2 for direct comparison
+        // 准备：同时授权 Permit2，用于直接调用的对比
         ERC20(address(tokenA)).approve(address(PERMIT2), type(uint256).max);
         PERMIT2.approve(address(tokenA), address(router), type(uint160).max, type(uint48).max);
 
@@ -174,7 +174,7 @@ contract SwapProxyTest is Test {
         path[0] = address(tokenA);
         path[1] = address(tokenB);
 
-        // Gas via proxy
+        // 经由代理合约的 gas
         bytes memory proxyCommands = abi.encodePacked(bytes1(uint8(Commands.V2_SWAP_EXACT_IN)));
         bytes[] memory proxyInputs = new bytes[](1);
         proxyInputs[0] = abi.encode(USER, AMOUNT, 0, path, false, new uint256[](0));
@@ -190,7 +190,7 @@ contract SwapProxyTest is Test {
         );
         uint256 gasProxy = gasBefore - gasleft();
 
-        // Gas via direct Permit2
+        // 直接使用 Permit2 的 gas
         bytes memory directCommands = abi.encodePacked(bytes1(uint8(Commands.V2_SWAP_EXACT_IN)));
         bytes[] memory directInputs = new bytes[](1);
         directInputs[0] = abi.encode(USER, AMOUNT, 0, path, true, new uint256[](0));

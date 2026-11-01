@@ -10,12 +10,12 @@ struct MigratorParameters {
     address v4PositionManager;
 }
 
-/// @title Migrator Immutables
-/// @notice Immutable state for liquidity-migration contracts
+/// @title 迁移器不可变量
+/// @notice 流动性迁移合约的不可变状态
 contract MigratorImmutables {
-    /// @notice v3 PositionManager address
+    /// @notice v3 PositionManager 地址
     INonfungiblePositionManager public immutable V3_POSITION_MANAGER;
-    /// @notice v4 PositionManager address
+    /// @notice v4 PositionManager 地址
     IPositionManager public immutable V4_POSITION_MANAGER;
 
     constructor(MigratorParameters memory params) {

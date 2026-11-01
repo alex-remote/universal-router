@@ -60,14 +60,14 @@ const FEE_SIZE = 3
 export function encodePath(path: string[]): string {
   let encoded = '0x'
   for (let i = 0; i < path.length - 1; i++) {
-    // 20 byte encoding of the address
+    // 地址的 20 字节编码
     encoded += path[i].slice(2)
-    // 3 byte encoding of the fee
+    // 手续费的 3 字节编码
     encoded += getFeeTier(path[i], path[i + 1])
       .toString(16)
       .padStart(2 * FEE_SIZE, '0')
   }
-  // encode the final token
+  // 编码最后一个代币
   encoded += path[path.length - 1].slice(2)
 
   return encoded.toLowerCase()

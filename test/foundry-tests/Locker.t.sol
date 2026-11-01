@@ -26,7 +26,7 @@ contract LockerTest is Test {
         assertEq(Locker.isLocked(), false);
 
         Locker.set(locker);
-        // the contract is locked when the locker is not address(0)
+        // 当 locker 不为 address(0) 时，合约处于锁定状态
         assertEq(Locker.isLocked(), locker != address(0));
 
         Locker.set(address(0));

@@ -18,16 +18,16 @@ abstract contract DeployUniversalRouter is Script {
 
     error Permit2NotDeployed();
 
-    // set values for params and unsupported
+    // 为 params 和 unsupported 赋值
     function setUp() public virtual;
 
     function run() external returns (UniversalRouter router) {
         vm.startBroadcast();
 
-        // deploy permit2 if it isnt yet deployed
+        // 如果 permit2 尚未部署，则部署它
         if (params.permit2 == address(0)) revert Permit2NotDeployed();
 
-        // only deploy unsupported if this chain doesn't already have one
+        // 仅当本链尚无 unsupported 时才部署它
         if (unsupported == address(0)) {
             unsupported = address(new UnsupportedProtocol());
             console2.log('UnsupportedProtocol deployed:', unsupported);
@@ -41,9 +41,9 @@ abstract contract DeployUniversalRouter is Script {
             pairInitCodeHash: params.pairInitCodeHash,
             poolInitCodeHash: params.poolInitCodeHash,
             v4PoolManager: mapUnsupported(params.v4PoolManager),
-            permissionsAdapterFactory: params.permissionsAdapterFactory, // skip mapUnsupported: address(0) signals permissioned-pools disabled
+            permissionsAdapterFactory: params.permissionsAdapterFactory, // 跳过 mapUnsupported：address(0) 表示禁用许可池（permissioned pools）
             v3NFTPositionManager: mapUnsupported(params.v3NFTPositionManager),
-            v4PositionManager: mapUnsupported(params.v4PositionManager), // must be base PositionManager, not PermissionedPositionManager
+            v4PositionManager: mapUnsupported(params.v4PositionManager), // 必须是基础 PositionManager，而不是 PermissionedPositionManager
             spokePool: mapUnsupported(params.spokePool)
         });
 

@@ -54,17 +54,17 @@ describe('Uniswap V3 Tests:', () => {
     router = (await deployUniversalRouter(bob.address)) as UniversalRouter
     planner = new RoutePlanner()
 
-    // alice gives bob some tokens
+    // alice 给 bob 一些代币
     await daiContract.connect(alice).transfer(bob.address, expandTo18DecimalsBN(100000))
     await wethContract.connect(alice).transfer(bob.address, expandTo18DecimalsBN(100))
     await usdcContract.connect(alice).transfer(bob.address, expandTo6DecimalsBN(100000))
 
-    // Bob max-approves the permit2 contract to access his DAI and WETH
+    // Bob 对 permit2 合约进行最大额度授权，使其可以动用他的 DAI 和 WETH
     await daiContract.connect(bob).approve(permit2.address, MAX_UINT)
     await wethContract.connect(bob).approve(permit2.address, MAX_UINT)
     await usdcContract.connect(bob).approve(permit2.address, MAX_UINT)
 
-    // for these tests Bob gives the router max approval on permit2
+    // 在这些测试中，Bob 在 permit2 上给予路由器最大额度授权
     await permit2.approve(DAI.address, router.address, MAX_UINT160, DEADLINE)
     await permit2.approve(WETH.address, router.address, MAX_UINT160, DEADLINE)
   })
@@ -94,7 +94,7 @@ describe('Uniswap V3 Tests:', () => {
     let permit: PermitSingle
 
     beforeEach(async () => {
-      // cancel the permit on DAI
+      // 取消 DAI 上的 permit
       await permit2.approve(DAI.address, ADDRESS_ZERO, 0, 0)
     })
 
@@ -102,16 +102,16 @@ describe('Uniswap V3 Tests:', () => {
       const amountInDAI = expandTo18DecimalsBN(100)
       const minAmountOutWETH = expandTo18DecimalsBN(0.02)
 
-      // first bob approves permit2 to access his DAI
+      // 首先，bob 授权 permit2 动用他的 DAI
       await daiContract.connect(bob).approve(permit2.address, MAX_UINT)
 
-      // second bob signs a permit to allow the router to access his DAI
+      // 其次，bob 签署一个 permit，允许路由器动用他的 DAI
       permit = {
         details: {
           token: DAI.address,
           amount: amountInDAI,
-          expiration: 0, // expiration of 0 is block.timestamp
-          nonce: 0, // this is his first trade
+          expiration: 0, // expiration 为 0 表示 block.timestamp
+          nonce: 0, // 这是他的第一笔交易
         },
         spender: router.address,
         sigDeadline: DEADLINE,
@@ -120,7 +120,7 @@ describe('Uniswap V3 Tests:', () => {
 
       const path = encodePathExactInput([DAI.address, WETH.address])
 
-      // 1) permit the router to access funds, 2) trade, which takes the funds directly from permit2
+      // 1) permit 路由器动用资金，2) 交易，交易时直接从 permit2 提取资金
       planner.addCommand(CommandType.PERMIT2_PERMIT, [permit, sig])
       planner.addCommand(CommandType.V3_SWAP_EXACT_IN, [
         MSG_SENDER,
@@ -146,16 +146,16 @@ describe('Uniswap V3 Tests:', () => {
       const maxAmountInDAI = expandTo18DecimalsBN(4000)
       const amountOutWETH = expandTo18DecimalsBN(1)
 
-      // first bob approves permit2 to access his DAI
+      // 首先，bob 授权 permit2 动用他的 DAI
       await daiContract.connect(bob).approve(permit2.address, MAX_UINT)
 
-      // second bob signs a permit to allow the router to access his DAI
+      // 其次，bob 签署一个 permit，允许路由器动用他的 DAI
       permit = {
         details: {
           token: DAI.address,
           amount: maxAmountInDAI,
-          expiration: 0, // expiration of 0 is block.timestamp
-          nonce: 0, // this is his first trade
+          expiration: 0, // expiration 为 0 表示 block.timestamp
+          nonce: 0, // 这是他的第一笔交易
         },
         spender: router.address,
         sigDeadline: DEADLINE,
@@ -164,7 +164,7 @@ describe('Uniswap V3 Tests:', () => {
 
       const path = encodePathExactOutput([DAI.address, WETH.address])
 
-      // 1) permit the router to access funds, 2) trade, which takes the funds directly from permit2
+      // 1) permit 路由器动用资金，2) 交易，交易时直接从 permit2 提取资金
       planner.addCommand(CommandType.PERMIT2_PERMIT, [permit, sig])
       planner.addCommand(CommandType.V3_SWAP_EXACT_OUT, [
         MSG_SENDER,
@@ -231,7 +231,7 @@ describe('Uniswap V3 Tests:', () => {
     })
 
     it('completes a V3 exactOut swap', async () => {
-      // trade DAI in for WETH out
+      // 交易：输入 DAI，输出 WETH
       const tokens = [DAI.address, WETH.address]
       const path = encodePathExactOutput(tokens)
 
@@ -258,7 +258,7 @@ describe('Uniswap V3 Tests:', () => {
     })
 
     it('completes a V3 exactOut swap with longer path', async () => {
-      // trade DAI in for WETH out
+      // 交易：输入 DAI，输出 WETH
       const tokens = [DAI.address, USDC.address, WETH.address]
       const path = encodePathExactOutput(tokens)
 
@@ -300,7 +300,7 @@ describe('Uniswap V3 Tests:', () => {
     })
 
     it('completes a V3 exactOut swap', async () => {
-      // trade DAI in for WETH out
+      // 交易：输入 DAI，输出 WETH
       const tokens = [DAI.address, WETH.address]
       const path = encodePathExactOutput(tokens)
 

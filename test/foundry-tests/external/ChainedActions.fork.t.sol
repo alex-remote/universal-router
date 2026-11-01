@@ -19,7 +19,7 @@ contract ChainedActionsFork is Test {
     function setUp() public {
         try vm.envString('FORK_URL') returns (string memory) {
             console2.log('Forked Ethereum mainnet');
-            // Fork mainnet at a specific block for consistency
+            // 在指定区块分叉主网，以保证结果一致
             vm.createSelectFork(vm.rpcUrl('mainnet'), 23_000_000);
 
             RouterParameters memory params = RouterParameters({
@@ -82,7 +82,7 @@ contract ChainedActionsFork is Test {
 
     function test_depositNative() public onlyForked {
         uint256 routerBalanceBefore = address(router).balance;
-        // ETH is wrapped as WETH9
+        // ETH 被包装为 WETH9
         uint256 spokePoolBalanceBefore = WETH9.balanceOf(ACROSS_SPOKE_POOL);
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.ACROSS_V4_DEPOSIT_V3)));
         AcrossV4DepositV3Params memory params = AcrossV4DepositV3Params({
@@ -136,7 +136,7 @@ contract ChainedActionsFork is Test {
     function test_depositNativeWithContractBalance() public onlyForked {
         uint256 routerBalanceBefore = address(router).balance;
         uint256 totalDepositAmount = routerBalanceBefore + 1 ether;
-        // ETH is wrapped as WETH9
+        // ETH 被包装为 WETH9
         uint256 spokePoolBalanceBefore = WETH9.balanceOf(ACROSS_SPOKE_POOL);
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.ACROSS_V4_DEPOSIT_V3)));
         AcrossV4DepositV3Params memory params = AcrossV4DepositV3Params({

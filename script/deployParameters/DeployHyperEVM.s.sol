@@ -4,12 +4,12 @@ pragma solidity ^0.8.24;
 import {DeployUniversalRouter} from '../DeployUniversalRouter.s.sol';
 import {RouterParameters} from 'contracts/types/RouterParameters.sol';
 
-/// @notice HyperEVM mainnet (chain id 999). Addresses from Uniswap/contracts deployments/json/999.json.
+/// @notice HyperEVM 主网（chain id 999）。地址取自 Uniswap/contracts 的 deployments/json/999.json。
 contract DeployHyperEVM is DeployUniversalRouter {
     function setUp() public override {
         params = RouterParameters({
             permit2: 0x000000000022D473030F116dDEE9F6B43aC78BA3,
-            // WHYPE, the canonical wrapped native on HyperEVM
+            // WHYPE，HyperEVM 上标准（canonical）的包装原生代币
             weth9: 0x5555555555555555555555555555555555555555,
             v2Factory: 0x89e5DB8B5aA49aA85AC63f691524311AEB649eba,
             v3Factory: 0xf0db7b58379503491d857dB50AC9ece64c653918,
@@ -19,11 +19,11 @@ contract DeployHyperEVM is DeployUniversalRouter {
             permissionsAdapterFactory: 0x8702463e73f74d0b6765aBceb314Ef07aCb92650,
             v3NFTPositionManager: 0x39654A85A4C05127f5Fd6ED22CAeC077A0fB1377,
             v4PositionManager: 0x0d7Ab5B3db668128Aff6F70C4eBC71D7d4DA9bf9,
-            // Across SpokePool on HyperEVM (chainId()=999, wrappedNativeToken()=WHYPE)
+            // HyperEVM 上的 Across SpokePool（chainId()=999，wrappedNativeToken()=WHYPE）
             spokePool: 0x35E63eA3eb0fb7A3bc543C71FB66412e1F6B0E04
         });
 
-        // deployed alongside the 2.1.2 router on 2026-09-17
+        // 与 2.1.2 版路由器一同于 2026-09-17 部署
         unsupported = 0xEEE3Aa3c0d6D6f4E702748DeAcb42991A0094BcF;
     }
 }

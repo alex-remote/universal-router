@@ -54,17 +54,17 @@ describe('Uniswap V2 Tests:', () => {
     router = (await deployUniversalRouter(bob.address)) as UniversalRouter
     planner = new RoutePlanner()
 
-    // alice gives bob some tokens
+    // alice 给 bob 一些代币
     await daiContract.connect(alice).transfer(bob.address, expandTo18DecimalsBN(100000))
     await wethContract.connect(alice).transfer(bob.address, expandTo18DecimalsBN(100))
     await usdcContract.connect(alice).transfer(bob.address, expandTo6DecimalsBN(100000))
 
-    // Bob max-approves the permit2 contract to access his DAI and WETH
+    // Bob 对 permit2 合约进行最大额度授权，使其可以动用他的 DAI 和 WETH
     await daiContract.connect(bob).approve(permit2.address, MAX_UINT)
     await wethContract.connect(bob).approve(permit2.address, MAX_UINT)
     await usdcContract.connect(bob).approve(permit2.address, MAX_UINT)
 
-    // for these tests Bob gives the router max approval on permit2
+    // 在这些测试中，Bob 在 permit2 上给予路由器最大额度授权
     await permit2.approve(DAI.address, router.address, MAX_UINT160, DEADLINE)
     await permit2.approve(WETH.address, router.address, MAX_UINT160, DEADLINE)
   })
@@ -73,30 +73,30 @@ describe('Uniswap V2 Tests:', () => {
     let permit: PermitSingle
 
     beforeEach(async () => {
-      // cancel the permit on DAI
+      // 取消 DAI 上的 permit
       await permit2.approve(DAI.address, router.address, 0, 0)
     })
 
     it('Permit2 can silently fail', async () => {
       const amountInDAI = expandTo18DecimalsBN(100)
 
-      // bob signs a permit to allow the router to access his DAI
+      // bob 签署一个 permit，允许路由器动用他的 DAI
       permit = {
         details: {
           token: DAI.address,
           amount: amountInDAI,
-          expiration: 0, // expiration of 0 is block.timestamp
-          nonce: 0, // this is his first trade
+          expiration: 0, // expiration 为 0 表示 block.timestamp
+          nonce: 0, // 这是他的第一笔交易
         },
         spender: router.address,
         sigDeadline: DEADLINE,
       }
       const sig = await getPermitSignature(permit, bob, permit2)
 
-      // 1) permit the router to access funds, not allowing revert
+      // 1) permit 路由器动用资金，不允许回滚（revert）
       planner.addCommand(CommandType.PERMIT2_PERMIT, [permit, sig])
 
-      // 2) permit the router to access funds again, allowing revert
+      // 2) 再次 permit 路由器动用资金，允许回滚（revert）
       planner.addCommand(CommandType.PERMIT2_PERMIT, [permit, sig], true)
 
       let nonce = (await permit2.allowance(bob.address, DAI.address, router.address)).nonce
@@ -112,20 +112,20 @@ describe('Uniswap V2 Tests:', () => {
       const amountInDAI = expandTo18DecimalsBN(100)
       const minAmountOutWETH = expandTo18DecimalsBN(0.02)
 
-      // second bob signs a permit to allow the router to access his DAI
+      // 其次，bob 签署一个 permit，允许路由器动用他的 DAI
       permit = {
         details: {
           token: DAI.address,
           amount: amountInDAI,
-          expiration: 0, // expiration of 0 is block.timestamp
-          nonce: 0, // this is his first trade
+          expiration: 0, // expiration 为 0 表示 block.timestamp
+          nonce: 0, // 这是他的第一笔交易
         },
         spender: router.address,
         sigDeadline: DEADLINE,
       }
       const sig = await getPermitSignature(permit, bob, permit2)
 
-      // 1) permit the router to access funds, 2) withdraw the funds into the pair, 3) trade
+      // 1) permit 路由器动用资金，2) 将资金提取到交易对中，3) 交易
       planner.addCommand(CommandType.PERMIT2_PERMIT, [permit, sig])
       planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
         MSG_SENDER,
@@ -151,20 +151,20 @@ describe('Uniswap V2 Tests:', () => {
       const maxAmountInDAI = expandTo18DecimalsBN(4000)
       const amountOutWETH = expandTo18DecimalsBN(1)
 
-      // second bob signs a permit to allow the router to access his DAI
+      // 其次，bob 签署一个 permit，允许路由器动用他的 DAI
       permit = {
         details: {
           token: DAI.address,
           amount: maxAmountInDAI,
-          expiration: 0, // expiration of 0 is block.timestamp
-          nonce: 0, // this is his first trade
+          expiration: 0, // expiration 为 0 表示 block.timestamp
+          nonce: 0, // 这是他的第一笔交易
         },
         spender: router.address,
         sigDeadline: DEADLINE,
       }
       const sig = await getPermitSignature(permit, bob, permit2)
 
-      // 1) permit the router to access funds, 2) trade - the transfer happens within the trade for exactOut
+      // 1) permit 路由器动用资金，2) 交易——对于 exactOut，转账在交易过程中发生
       planner.addCommand(CommandType.PERMIT2_PERMIT, [permit, sig])
       planner.addCommand(CommandType.V2_SWAP_EXACT_OUT, [
         MSG_SENDER,
@@ -190,20 +190,20 @@ describe('Uniswap V2 Tests:', () => {
       const max_uint = BigNumber.from(MAX_UINT160)
       const minAmountOutWETH = expandTo18DecimalsBN(0.03)
 
-      // second bob signs a permit to allow the router to access his DAI
+      // 其次，bob 签署一个 permit，允许路由器动用他的 DAI
       permit = {
         details: {
           token: DAI.address,
           amount: max_uint,
-          expiration: 0, // expiration of 0 is block.timestamp
-          nonce: 0, // this is his first trade
+          expiration: 0, // expiration 为 0 表示 block.timestamp
+          nonce: 0, // 这是他的第一笔交易
         },
         spender: router.address,
         sigDeadline: DEADLINE,
       }
       const sig = await getPermitSignature(permit, bob, permit2)
 
-      // 1) permit the router to access funds, 2) withdraw the funds into the pair, 3) trade
+      // 1) permit 路由器动用资金，2) 将资金提取到交易对中，3) 交易
       planner.addCommand(CommandType.PERMIT2_PERMIT, [permit, sig])
       planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
         MSG_SENDER,
@@ -266,7 +266,7 @@ describe('Uniswap V2 Tests:', () => {
     })
 
     it('exactIn trade, where an output fee is taken', async () => {
-      // back to the router so someone can take a fee
+      // 回到路由器，以便有人可以收取手续费
       planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
         ADDRESS_THIS,
         amountIn,
@@ -293,7 +293,7 @@ describe('Uniswap V2 Tests:', () => {
       expect(bobEarnings).to.be.gt(0)
       expect(aliceFee).to.be.gt(0)
 
-      // total fee is 1% of bob's output
+      // 总手续费为 bob 输出的 1%
       expect(aliceFee.add(bobEarnings).mul(ONE_PERCENT_BIPS).div(10_000)).to.eq(aliceFee)
     })
 
@@ -401,7 +401,7 @@ describe('Uniswap V2 Tests:', () => {
       const minAmountOut = expandTo18DecimalsBN(0.001)
       const pairAddress = Pair.getAddress(DAI, WETH)
       planner.addCommand(CommandType.WRAP_ETH, [pairAddress, amountIn])
-      // amountIn of 0 because the weth is already in the pair
+      // amountIn 为 0，因为 weth 已经在交易对中
       planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
         MSG_SENDER,
         0,
@@ -444,7 +444,7 @@ describe('Uniswap V2 Tests:', () => {
       const { ethBalanceBefore, ethBalanceAfter, daiBalanceBefore, daiBalanceAfter, v2SwapEventArgs, gasSpent } =
         await executeRouter(planner, bob, router, wethContract, daiContract, usdcContract, value)
       const { amount0Out: daiTraded, amount1In: wethTraded } = v2SwapEventArgs!
-      expect(daiBalanceAfter.sub(daiBalanceBefore)).gt(amountOut) // rounding
+      expect(daiBalanceAfter.sub(daiBalanceBefore)).gt(amountOut) // 舍入
       expect(daiBalanceAfter.sub(daiBalanceBefore)).eq(daiTraded)
       expect(ethBalanceBefore.sub(ethBalanceAfter)).to.eq(wethTraded.add(gasSpent))
     })

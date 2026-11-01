@@ -7,8 +7,8 @@ import {Actions} from '@uniswap/v4-periphery/src/libraries/Actions.sol';
 import {IERC721Permit} from '@uniswap/v3-periphery/contracts/interfaces/IERC721Permit.sol';
 import {CalldataDecoder} from '@uniswap/v4-periphery/src/libraries/CalldataDecoder.sol';
 
-/// @title V3 to V4 Migrator
-/// @notice A contract that migrates liquidity from Uniswap V3 to V4
+/// @title V3 到 V4 迁移器
+/// @notice 将流动性从 Uniswap V3 迁移到 V4 的合约
 abstract contract V3ToV4Migrator is MigratorImmutables {
     using CalldataDecoder for bytes;
 
@@ -16,21 +16,21 @@ abstract contract V3ToV4Migrator is MigratorImmutables {
     error OnlyMintAllowed();
     error NotAuthorizedForToken(uint256 tokenId);
 
-    /// @dev validate if an action is decreaseLiquidity, collect, or burn
+    /// @dev 校验某个操作是否为 decreaseLiquidity、collect 或 burn
     function _isValidAction(bytes4 selector) private pure returns (bool) {
         return selector == INonfungiblePositionManager.decreaseLiquidity.selector
             || selector == INonfungiblePositionManager.collect.selector
             || selector == INonfungiblePositionManager.burn.selector;
     }
 
-    /// @dev the caller is authorized for the token if its the owner, spender, or operator
+    /// @dev 若调用者是该代币的所有者、被授权方（spender）或操作员（operator），则其对该代币有权限
     function _isAuthorizedForToken(address caller, uint256 tokenId) private view returns (bool) {
         address owner = V3_POSITION_MANAGER.ownerOf(tokenId);
         return caller == owner || V3_POSITION_MANAGER.getApproved(tokenId) == caller
             || V3_POSITION_MANAGER.isApprovedForAll(owner, caller);
     }
 
-    /// @dev check that a call is to the ERC721 permit function
+    /// @dev 检查调用是否指向 ERC721 的 permit 函数
     function _checkV3PermitCall(bytes calldata inputs) internal pure {
         bytes4 selector;
         assembly {
@@ -42,7 +42,7 @@ abstract contract V3ToV4Migrator is MigratorImmutables {
         }
     }
 
-    /// @dev check that the v3 position manager call is a safe call
+    /// @dev 检查对 v3 position manager 的调用是否为安全调用
     function _checkV3PositionManagerCall(bytes calldata inputs, address caller) internal view {
         bytes4 selector;
         assembly {
@@ -55,22 +55,22 @@ abstract contract V3ToV4Migrator is MigratorImmutables {
 
         uint256 tokenId;
         assembly {
-            // tokenId is always the first parameter in the valid actions
+            // 在各有效操作中，tokenId 始终是第一个参数
             tokenId := calldataload(add(inputs.offset, 0x04))
         }
-        // If any other address that is not the owner wants to call this function, it also needs to be approved (in addition to this contract)
-        // This can be done in 2 ways:
-        //    1. This contract is permitted for the specific token and the caller is approved for ALL of the owner's tokens
-        //    2. This contract is permitted for ALL of the owner's tokens and the caller is permitted for the specific token
+        // 若所有者以外的其他地址想调用此函数，除本合约需获得授权外，该地址自身也需要获得授权
+        // 可通过以下 2 种方式实现：
+        //    1. 本合约获得该特定代币的许可，且调用者获得所有者全部（ALL）代币的授权
+        //    2. 本合约获得所有者全部（ALL）代币的许可，且调用者获得该特定代币的许可
         if (!_isAuthorizedForToken(caller, tokenId)) {
             revert NotAuthorizedForToken(tokenId);
         }
     }
 
-    /// @dev check that the v4 position manager call is a safe call
-    /// of the position-altering Actions, we only allow Actions.MINT
-    /// this is because, if a user could be tricked into approving the UniversalRouter for
-    /// their position, an attacker could take their fees, or drain their entire position
+    /// @dev 检查对 v4 position manager 的调用是否为安全调用
+    /// 在会改变头寸的 Actions 中，我们只允许 Actions.MINT
+    /// 这是因为，如果用户可能被诱骗将其头寸授权给 UniversalRouter，
+    /// 攻击者就可能拿走其手续费，或掏空其整个头寸
     function _checkV4PositionManagerCall(bytes calldata inputs) internal view {
         bytes4 selector;
         assembly {
@@ -80,11 +80,11 @@ abstract contract V3ToV4Migrator is MigratorImmutables {
             revert InvalidAction(selector);
         }
 
-        // slice is `abi.encode(bytes unlockData, uint256 deadline)`
+        // slice 为 `abi.encode(bytes unlockData, uint256 deadline)`
         bytes calldata slice = inputs[4:];
-        // the first bytes(0) extracts the unlockData parameter from modifyLiquidities
+        // 第一个 bytes(0) 从 modifyLiquidities 中提取 unlockData 参数
         // unlockData = `abi.encode(bytes actions, bytes[] params)`
-        // the second bytes(0) extracts the actions parameter from unlockData
+        // 第二个 bytes(0) 从 unlockData 中提取 actions 参数
         bytes calldata actions = slice.toBytes(0).toBytes(0);
 
         uint256 numActions = actions.length;

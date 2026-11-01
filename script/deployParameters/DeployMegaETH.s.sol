@@ -14,10 +14,10 @@ contract DeployMegaETH is DeployUniversalRouter {
             pairInitCodeHash: 0x96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f,
             poolInitCodeHash: 0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54,
             v4PoolManager: 0xaCB7e78fa05D562e0A5D3089ec896D57D057d38E,
-            permissionsAdapterFactory: address(0), // ToDo: Add permissions adapter factory
+            permissionsAdapterFactory: address(0), // ToDo: 添加 permissions adapter factory
             v3NFTPositionManager: 0xCDc86e98184e96436F733a8Bf31BD4F0214E6D7d,
             v4PositionManager: 0x9AE0921E981AAa7308f176F8d4F9129b9247C89D,
-            // no Across SpokePool on MegaETH
+            // MegaETH 上没有 Across SpokePool
             spokePool: UNSUPPORTED_PROTOCOL
         });
 

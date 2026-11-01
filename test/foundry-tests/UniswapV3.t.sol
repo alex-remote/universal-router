@@ -11,7 +11,7 @@ import {MockERC20} from './mock/MockERC20.sol';
 import {MockV3Pool} from './mock/MockV3Pool.sol';
 
 contract UniswapV3Test is Test {
-    // 90% exchange rate: input 100 → output 90
+    // 90% 兑换比率：输入 100 → 输出 90
     uint256 constant RATE = 0.9e18;
     uint256 constant PRECISION = 1e36;
     uint24 constant FEE = 3000;
@@ -21,12 +21,12 @@ contract UniswapV3Test is Test {
     address constant RECIPIENT = address(0x1234);
 
     UniversalRouter router;
-    MockERC20 tokenA; // lowest address
+    MockERC20 tokenA; // 地址最小
     MockERC20 tokenB;
-    MockERC20 tokenC; // highest address
+    MockERC20 tokenC; // 地址最大
 
     function setUp() public {
-        // Deploy tokens and sort by address
+        // 部署代币并按地址排序
         address[3] memory tokens;
         for (uint256 i = 0; i < 3; i++) {
             tokens[i] = address(new MockERC20());
@@ -38,7 +38,7 @@ contract UniswapV3Test is Test {
         tokenB = MockERC20(tokens[1]);
         tokenC = MockERC20(tokens[2]);
 
-        // Deploy router
+        // 部署路由器
         RouterParameters memory params = RouterParameters({
             permit2: address(0),
             weth9: address(0),
@@ -54,13 +54,13 @@ contract UniswapV3Test is Test {
         });
         router = new UniversalRouter(params);
 
-        // Deploy mock pools at deterministic addresses
+        // 在确定性地址上部署模拟池
         _deployMockPool(address(tokenA), address(tokenB));
         _deployMockPool(address(tokenB), address(tokenC));
     }
 
     // ──────────────────────────────────────────────
-    // Exact Input - Single Hop
+    // 精确输入 - 单跳
     // ──────────────────────────────────────────────
 
     function testV3ExactInputSingleHopNoSlippage() public {
@@ -77,7 +77,7 @@ contract UniswapV3Test is Test {
 
         bytes memory path = abi.encodePacked(address(tokenA), FEE, address(tokenB));
         uint256[] memory slippage = new uint256[](1);
-        slippage[0] = 0.8e36; // 80% threshold, actual is 90%
+        slippage[0] = 0.8e36; // 阈值 80%，实际为 90%
         _executeV3ExactIn(RECIPIENT, 100 ether, 0, path, slippage);
 
         assertEq(tokenB.balanceOf(RECIPIENT), 90 ether);
@@ -88,14 +88,14 @@ contract UniswapV3Test is Test {
 
         bytes memory path = abi.encodePacked(address(tokenA), FEE, address(tokenB));
         uint256[] memory slippage = new uint256[](1);
-        slippage[0] = 0.95e36; // 95% threshold, actual is 90%
+        slippage[0] = 0.95e36; // 阈值 95%，实际为 90%
 
         vm.expectRevert();
         _executeV3ExactIn(RECIPIENT, 100 ether, 0, path, slippage);
     }
 
     // ──────────────────────────────────────────────
-    // Exact Input - Multi Hop
+    // 精确输入 - 多跳
     // ──────────────────────────────────────────────
 
     function testV3ExactInputMultiHopSlippagePass() public {
@@ -103,8 +103,8 @@ contract UniswapV3Test is Test {
 
         bytes memory path = abi.encodePacked(address(tokenA), FEE, address(tokenB), FEE, address(tokenC));
         uint256[] memory slippage = new uint256[](2);
-        slippage[0] = 0.8e36; // hop 0: A→B
-        slippage[1] = 0.8e36; // hop 1: B→C
+        slippage[0] = 0.8e36; // 第 0 跳：A→B
+        slippage[1] = 0.8e36; // 第 1 跳：B→C
         _executeV3ExactIn(RECIPIENT, 100 ether, 0, path, slippage);
 
         assertEq(tokenC.balanceOf(RECIPIENT), 81 ether);
@@ -115,7 +115,7 @@ contract UniswapV3Test is Test {
 
         bytes memory path = abi.encodePacked(address(tokenA), FEE, address(tokenB), FEE, address(tokenC));
         uint256[] memory slippage = new uint256[](2);
-        slippage[0] = 0.95e36; // hop 0 too tight
+        slippage[0] = 0.95e36; // 第 0 跳限制过严
         slippage[1] = 0.8e36;
 
         vm.expectRevert();
@@ -128,23 +128,23 @@ contract UniswapV3Test is Test {
         bytes memory path = abi.encodePacked(address(tokenA), FEE, address(tokenB), FEE, address(tokenC));
         uint256[] memory slippage = new uint256[](2);
         slippage[0] = 0.8e36;
-        slippage[1] = 0.95e36; // hop 1 too tight
+        slippage[1] = 0.95e36; // 第 1 跳限制过严
 
         vm.expectRevert();
         _executeV3ExactIn(RECIPIENT, 100 ether, 0, path, slippage);
     }
 
     // ──────────────────────────────────────────────
-    // Exact Output - Single Hop
+    // 精确输出 - 单跳
     // ──────────────────────────────────────────────
 
     function testV3ExactOutputSingleHopSlippagePass() public {
         deal(address(tokenA), address(router), 200 ether);
 
-        // Exact output path is reversed: B → A (to trade A→B)
+        // 精确输出的路径是反向的：B → A（用于 A→B 的交易）
         bytes memory path = abi.encodePacked(address(tokenB), FEE, address(tokenA));
         uint256[] memory slippage = new uint256[](1);
-        slippage[0] = 0.8e36; // 80% threshold, actual is 90%
+        slippage[0] = 0.8e36; // 阈值 80%，实际为 90%
         _executeV3ExactOut(RECIPIENT, 90 ether, type(uint256).max, path, slippage);
 
         assertEq(tokenB.balanceOf(RECIPIENT), 90 ether);
@@ -155,39 +155,39 @@ contract UniswapV3Test is Test {
 
         bytes memory path = abi.encodePacked(address(tokenB), FEE, address(tokenA));
         uint256[] memory slippage = new uint256[](1);
-        slippage[0] = 0.95e36; // 95% threshold, actual is 90%
+        slippage[0] = 0.95e36; // 阈值 95%，实际为 90%
 
         vm.expectRevert();
         _executeV3ExactOut(RECIPIENT, 90 ether, type(uint256).max, path, slippage);
     }
 
     // ──────────────────────────────────────────────
-    // Exact Output - Multi Hop (the bug-catching tests)
+    // 精确输出 - 多跳（用于捕获 bug 的测试）
     // ──────────────────────────────────────────────
 
     function testV3ExactOutputMultiHopSlippagePass() public {
         deal(address(tokenA), address(router), 200 ether);
 
-        // Trade A→B→C, exact output 81 C. Path reversed: C-B-A
+        // 交易 A→B→C，精确输出 81 C。路径反向：C-B-A
         bytes memory path = abi.encodePacked(address(tokenC), FEE, address(tokenB), FEE, address(tokenA));
         uint256[] memory slippage = new uint256[](2);
-        slippage[0] = 0.8e36; // hop 0: A→B
-        slippage[1] = 0.8e36; // hop 1: B→C
+        slippage[0] = 0.8e36; // 第 0 跳：A→B
+        slippage[1] = 0.8e36; // 第 1 跳：B→C
         _executeV3ExactOut(RECIPIENT, 81 ether, type(uint256).max, path, slippage);
 
         assertEq(tokenC.balanceOf(RECIPIENT), 81 ether);
     }
 
-    /// @notice This test catches the bug where hop 0 slippage was skipped in exact-output.
-    /// Hop 0 (A→B) is the first trading hop but the last executed in exact-output.
-    /// With the bug, minHopPriceX36[0] was never checked.
+    /// @notice 该测试用于捕获精确输出中第 0 跳滑点检查被跳过的 bug。
+    /// 第 0 跳（A→B）在交易顺序上是第一跳，但在精确输出中最后执行。
+    /// 存在该 bug 时，minHopPriceX36[0] 从未被检查。
     function testV3ExactOutputMultiHopSlippageFailHop0() public {
         deal(address(tokenA), address(router), 200 ether);
 
         bytes memory path = abi.encodePacked(address(tokenC), FEE, address(tokenB), FEE, address(tokenA));
         uint256[] memory slippage = new uint256[](2);
-        slippage[0] = 0.95e36; // hop 0 (A→B) too tight - this MUST be enforced
-        slippage[1] = 0.8e36; // hop 1 (B→C) fine
+        slippage[0] = 0.95e36; // 第 0 跳（A→B）限制过严 - 此检查必须生效
+        slippage[1] = 0.8e36; // 第 1 跳（B→C）正常
 
         vm.expectRevert();
         _executeV3ExactOut(RECIPIENT, 81 ether, type(uint256).max, path, slippage);
@@ -198,22 +198,22 @@ contract UniswapV3Test is Test {
 
         bytes memory path = abi.encodePacked(address(tokenC), FEE, address(tokenB), FEE, address(tokenA));
         uint256[] memory slippage = new uint256[](2);
-        slippage[0] = 0.8e36; // hop 0 fine
-        slippage[1] = 0.95e36; // hop 1 (B→C) too tight
+        slippage[0] = 0.8e36; // 第 0 跳正常
+        slippage[1] = 0.95e36; // 第 1 跳（B→C）限制过严
 
         vm.expectRevert();
         _executeV3ExactOut(RECIPIENT, 81 ether, type(uint256).max, path, slippage);
     }
 
     // ──────────────────────────────────────────────
-    // Invalid hop slippage length
+    // 每跳滑点数组长度无效
     // ──────────────────────────────────────────────
 
     function testV3ExactInputInvalidHopSlippageLength() public {
         deal(address(tokenA), address(router), 100 ether);
 
         bytes memory path = abi.encodePacked(address(tokenA), FEE, address(tokenB));
-        uint256[] memory slippage = new uint256[](2); // wrong: 1 hop but 2 values
+        uint256[] memory slippage = new uint256[](2); // 错误：只有 1 跳却给了 2 个值
 
         vm.expectRevert(V3SwapRouter.V3HopPriceAndPathLengthMismatch.selector);
         _executeV3ExactIn(RECIPIENT, 100 ether, 0, path, slippage);
@@ -223,14 +223,14 @@ contract UniswapV3Test is Test {
         deal(address(tokenA), address(router), 200 ether);
 
         bytes memory path = abi.encodePacked(address(tokenB), FEE, address(tokenA));
-        uint256[] memory slippage = new uint256[](2); // wrong: 1 hop but 2 values
+        uint256[] memory slippage = new uint256[](2); // 错误：只有 1 跳却给了 2 个值
 
         vm.expectRevert(V3SwapRouter.V3HopPriceAndPathLengthMismatch.selector);
         _executeV3ExactOut(RECIPIENT, 90 ether, type(uint256).max, path, slippage);
     }
 
     // ──────────────────────────────────────────────
-    // Helpers
+    // 辅助函数
     // ──────────────────────────────────────────────
 
     function _executeV3ExactIn(
@@ -263,7 +263,7 @@ contract UniswapV3Test is Test {
         MockV3Pool mock = new MockV3Pool(token0, token1, RATE);
         address expected = _computePoolAddress(token0, token1, FEE);
         vm.etch(expected, address(mock).code);
-        // Give pool tokens to transfer during swaps
+        // 给池注入代币，供兑换过程中转出
         deal(token0, expected, 10000 ether);
         deal(token1, expected, 10000 ether);
     }

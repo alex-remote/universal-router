@@ -74,7 +74,7 @@ describe('V3 to V4 Migration Tests:', () => {
     planner = new RoutePlanner()
     v4Planner = new V4Planner()
 
-    // alice gives bob some tokens
+    // alice 给 bob 一些代币
     await daiContract.connect(alice).transfer(bob.address, expandTo18DecimalsBN(100000))
     await wethContract.connect(alice).transfer(bob.address, expandTo18DecimalsBN(100))
     await usdcContract.connect(alice).transfer(bob.address, expandTo6DecimalsBN(100000))
@@ -82,14 +82,14 @@ describe('V3 to V4 Migration Tests:', () => {
 
   describe('V3 Commands', () => {
     beforeEach(async () => {
-      // Bob max-approves the v3PM to access his USDC and WETH
+      // Bob 以最大额度授权 v3PM 使用他的 USDC 和 WETH
       await usdcContract.connect(bob).approve(v3NFTPositionManager.address, MAX_UINT)
       await wethContract.connect(bob).approve(v3NFTPositionManager.address, MAX_UINT)
 
       let bobUSDCBalanceBefore = await usdcContract.balanceOf(bob.address)
       let bobWETHBalanceBefore = await wethContract.balanceOf(bob.address)
 
-      // need to mint the nft to bob
+      // 需要将 NFT 铸造给 bob
       const tx = await v3NFTPositionManager.mint({
         token0: USDC.address,
         token1: WETH.address,
@@ -110,7 +110,7 @@ describe('V3 to V4 Migration Tests:', () => {
       let usdcSpent = bobUSDCBalanceBefore.sub(bobUSDCBalanceAfter)
       let wethSpent = bobWETHBalanceBefore.sub(bobWETHBalanceAfter)
 
-      // check that the USDC and WETH were spent
+      // 检查 USDC 和 WETH 已被花费
       expect(usdcSpent > 0 || wethSpent > 0)
       const receipt = await tx.wait()
 
@@ -138,7 +138,7 @@ describe('V3 to V4 Migration Tests:', () => {
 
         expect((await v3NFTPositionManager.positions(tokenIdv3)).operator).to.eq(ZERO_ADDRESS)
 
-        // bob permits the router to spend token
+        // bob 通过 permit 允许路由器使用代币
         await executeRouter(planner, bob, router, wethContract, daiContract, usdcContract)
 
         expect((await v3NFTPositionManager.positions(tokenIdv3)).operator).to.eq(router.address)
@@ -160,14 +160,14 @@ describe('V3 to V4 Migration Tests:', () => {
 
         planner.addCommand(CommandType.V3_POSITION_MANAGER_PERMIT, [encodedDecreaseCall])
 
-        // trying to execute the permit commmand by calling decrease liquidity
+        // 尝试通过调用减少流动性来执行 permit 命令
         await expect(
           executeRouter(planner, bob, router, wethContract, daiContract, usdcContract)
         ).to.be.revertedWithCustomError(router, 'InvalidAction')
       })
 
       it('only owner of the token can generate a signature to permit another address', async () => {
-        // eve is not the owner of the token
+        // eve 不是该代币的所有者
         const { v, r, s } = await getPermitNFTSignature(eve, v3NFTPositionManager, router.address, tokenIdv3, MAX_UINT)
         const erc721PermitParams = {
           spender: router.address,
@@ -182,7 +182,7 @@ describe('V3 to V4 Migration Tests:', () => {
 
         planner.addCommand(CommandType.V3_POSITION_MANAGER_PERMIT, [encodedErc721PermitCall])
 
-        // eve generated a signature for bob's token - fails since eve is not the owner
+        // eve 为 bob 的代币生成了签名——因 eve 不是所有者而失败
         await expect(
           executeRouter(planner, bob, router, wethContract, daiContract, usdcContract)
         ).to.be.revertedWithCustomError(router, 'ExecutionFailed')
@@ -205,7 +205,7 @@ describe('V3 to V4 Migration Tests:', () => {
 
         expect((await v3NFTPositionManager.positions(tokenIdv3)).operator).to.eq(ZERO_ADDRESS)
 
-        // eve can permit the router for bob using bob's signature
+        // eve 可以使用 bob 的签名替 bob 向路由器 permit
         await executeRouter(planner, eve, router, wethContract, daiContract, usdcContract)
 
         expect((await v3NFTPositionManager.positions(tokenIdv3)).operator).to.eq(router.address)
@@ -214,7 +214,7 @@ describe('V3 to V4 Migration Tests:', () => {
 
     describe('decrease liquidity', () => {
       it('decrease liquidity succeeds', async () => {
-        // first we need to permit the router to spend the nft
+        // 首先需要通过 permit 允许路由器使用该 NFT
         const { v, r, s } = await getPermitNFTSignature(bob, v3NFTPositionManager, router.address, tokenIdv3, MAX_UINT)
         const erc721PermitParams = {
           spender: router.address,
@@ -279,7 +279,7 @@ describe('V3 to V4 Migration Tests:', () => {
       })
 
       it('cannot call decrease liquidity with improper function selector', async () => {
-        // first we need to permit the router to spend the nft
+        // 首先需要通过 permit 允许路由器使用该 NFT
         const { v, r, s } = await getPermitNFTSignature(bob, v3NFTPositionManager, router.address, tokenIdv3, MAX_UINT)
         const erc721PermitParams = {
           spender: router.address,
@@ -322,7 +322,7 @@ describe('V3 to V4 Migration Tests:', () => {
       })
 
       it('fails if decrease liquidity call fails', async () => {
-        // first we need to permit the router to spend the nft
+        // 首先需要通过 permit 允许路由器使用该 NFT
         const { v, r, s } = await getPermitNFTSignature(bob, v3NFTPositionManager, router.address, tokenIdv3, MAX_UINT)
         const erc721PermitParams = {
           spender: router.address,
@@ -340,21 +340,21 @@ describe('V3 to V4 Migration Tests:', () => {
         let position = await v3NFTPositionManager.positions(tokenIdv3)
         let liquidity = position.liquidity
 
-        // set the deadline to 0
+        // 将截止时间设为 0
         const decreaseParams = { tokenId: tokenIdv3, liquidity: liquidity, amount0Min: 0, amount1Min: 0, deadline: '0' }
 
         const encodedDecreaseCall = encodeDecreaseLiquidity(decreaseParams)
 
         planner.addCommand(CommandType.V3_POSITION_MANAGER_CALL, [encodedDecreaseCall])
 
-        // call to decrease liquidity fails since the deadline is set to 0
+        // 由于截止时间设为 0，减少流动性的调用失败
         await expect(
           executeRouter(planner, bob, router, wethContract, daiContract, usdcContract)
         ).to.be.revertedWithCustomError(router, 'ExecutionFailed')
       })
 
       it('cannot call decrease liquidity if not authorized', async () => {
-        // bob creates a signature for the router to spend the token
+        // bob 创建签名，允许路由器使用该代币
         const { v, r, s } = await getPermitNFTSignature(bob, v3NFTPositionManager, router.address, tokenIdv3, MAX_UINT)
         const erc721PermitParams = {
           spender: router.address,
@@ -373,7 +373,7 @@ describe('V3 to V4 Migration Tests:', () => {
 
         planner = new RoutePlanner()
 
-        // transfer the token to eve
+        // 将该代币转账给 eve
         await v3NFTPositionManager.transferFrom(bob.address, eve.address, tokenIdv3)
 
         let position = await v3NFTPositionManager.positions(tokenIdv3)
@@ -391,20 +391,20 @@ describe('V3 to V4 Migration Tests:', () => {
 
         planner.addCommand(CommandType.V3_POSITION_MANAGER_CALL, [encodedDecreaseCall])
 
-        // bob is trying to use the token that is now owned by eve. he is not authorized to do so
+        // bob 试图使用现在归 eve 所有的代币。他无权这样做
         await expect(
           executeRouter(planner, bob, router, wethContract, daiContract, usdcContract)
         ).to.be.revertedWithCustomError(router, 'NotAuthorizedForToken')
       })
 
       it('eve permits bob for all tokens - he can call decrease even though he is not the owner', async () => {
-        // transfer the token to eve
+        // 将该代币转账给 eve
         await v3NFTPositionManager.transferFrom(bob.address, eve.address, tokenIdv3)
 
-        // eve permits bob to spend all of her tokens
+        // eve 允许 bob 使用她的全部代币
         await v3NFTPositionManager.connect(eve).setApprovalForAll(bob.address, true)
 
-        // eve creates a signature for the router to spend the token
+        // eve 创建签名，允许路由器使用该代币
         let { v, r, s } = await getPermitNFTSignature(eve, v3NFTPositionManager, router.address, tokenIdv3, MAX_UINT)
         const erc721PermitParams = {
           spender: router.address,
@@ -432,13 +432,13 @@ describe('V3 to V4 Migration Tests:', () => {
       })
 
       it('eve permits bob for the token and approves router for all her tokens - he can call decrease even though he is not the owner', async () => {
-        // transfer the token to eve
+        // 将该代币转账给 eve
         await v3NFTPositionManager.transferFrom(bob.address, eve.address, tokenIdv3)
 
-        // eve approves the router to spend all of her tokens
+        // eve 授权路由器使用她的全部代币
         await v3NFTPositionManager.connect(eve).setApprovalForAll(router.address, true)
 
-        // eve creates a signature for bob to spend the token
+        // eve 创建签名，允许 bob 使用该代币
         let { v, r, s } = await getPermitNFTSignature(eve, v3NFTPositionManager, bob.address, tokenIdv3, MAX_UINT)
         const erc721PermitParams = {
           spender: bob.address,
@@ -471,7 +471,7 @@ describe('V3 to V4 Migration Tests:', () => {
         let bobToken0BalanceBefore = await usdcContract.balanceOf(bob.address)
         let bobToken1BalanceBefore = await wethContract.balanceOf(bob.address)
 
-        // first we need to permit the router to spend the nft
+        // 首先需要通过 permit 允许路由器使用该 NFT
         let { v, r, s } = await getPermitNFTSignature(bob, v3NFTPositionManager, router.address, tokenIdv3, MAX_UINT)
         const erc721PermitParams = {
           spender: router.address,
@@ -523,13 +523,13 @@ describe('V3 to V4 Migration Tests:', () => {
         let bobToken0BalanceAfter = await usdcContract.balanceOf(bob.address)
         let bobToken1BalanceAfter = await wethContract.balanceOf(bob.address)
 
-        // bob is the recipient - he should have received the owed tokens
+        // bob 是接收方——他应已收到应得的代币
         expect(bobToken0BalanceAfter).to.be.gt(bobToken0BalanceBefore)
         expect(bobToken1BalanceAfter).to.be.gt(bobToken1BalanceBefore)
       })
 
       it('collecting the correct amount', async () => {
-        // first we need to permit the router to spend the nft
+        // 首先需要通过 permit 允许路由器使用该 NFT
         let { v, r, s } = await getPermitNFTSignature(bob, v3NFTPositionManager, router.address, tokenIdv3, MAX_UINT)
         const erc721PermitParams = {
           spender: router.address,
@@ -598,7 +598,7 @@ describe('V3 to V4 Migration Tests:', () => {
         let bobToken0BalanceAfter: BigNumber = await usdcContract.balanceOf(bob.address)
         let bobToken1BalanceAfter: BigNumber = await wethContract.balanceOf(bob.address)
 
-        // bob is the recipient - he should have received the owed tokens
+        // bob 是接收方——他应已收到应得的代币
         expect(bobToken0BalanceAfter.sub(bobToken0BalanceBefore)).to.be.eq(owed0Before)
         expect(bobToken1BalanceAfter.sub(bobToken1BalanceBefore)).to.be.eq(owed1Before)
       })
@@ -607,11 +607,11 @@ describe('V3 to V4 Migration Tests:', () => {
         let routerToken0BalanceBefore = await usdcContract.balanceOf(router.address)
         let routerToken1BalanceBefore = await wethContract.balanceOf(router.address)
 
-        // router should have no balance of the tokens
+        // 路由器不应持有这些代币的余额
         expect(routerToken0BalanceBefore).to.be.eq(0)
         expect(routerToken1BalanceBefore).to.be.eq(0)
 
-        // first we need to permit the router to spend the nft
+        // 首先需要通过 permit 允许路由器使用该 NFT
         let { v, r, s } = await getPermitNFTSignature(bob, v3NFTPositionManager, router.address, tokenIdv3, MAX_UINT)
         const erc721PermitParams = {
           spender: router.address,
@@ -656,14 +656,14 @@ describe('V3 to V4 Migration Tests:', () => {
         let routerToken0BalanceAfter = await usdcContract.balanceOf(router.address)
         let routerToken1BalanceAfter = await wethContract.balanceOf(router.address)
 
-        // router is the recipient - router should have received the owed tokens
-        // (there is sweep function if necessary)
+        // 路由器是接收方——路由器应已收到应得的代币
+        // （如有需要，可使用 sweep 函数清扫）
         expect(routerToken0BalanceAfter).to.be.gt(routerToken0BalanceBefore)
         expect(routerToken1BalanceAfter).to.be.gt(routerToken1BalanceBefore)
       })
 
       it('cannot call collect with improper signature', async () => {
-        // first we need to permit the router to spend the nft
+        // 首先需要通过 permit 允许路由器使用该 NFT
         let { v, r, s } = await getPermitNFTSignature(bob, v3NFTPositionManager, router.address, tokenIdv3, MAX_UINT)
         const erc721PermitParams = {
           spender: router.address,
@@ -713,7 +713,7 @@ describe('V3 to V4 Migration Tests:', () => {
       })
 
       it('cannot call collect with improper params', async () => {
-        // first we need to permit the router to spend the nft
+        // 首先需要通过 permit 允许路由器使用该 NFT
         let { v, r, s } = await getPermitNFTSignature(bob, v3NFTPositionManager, router.address, tokenIdv3, MAX_UINT)
         const erc721PermitParams = {
           spender: router.address,
@@ -758,7 +758,7 @@ describe('V3 to V4 Migration Tests:', () => {
       })
 
       it('cannot call collect if the router is not approved for that tokenid', async () => {
-        // first we need to permit the router to spend the nft
+        // 首先需要通过 permit 允许路由器使用该 NFT
         let { v, r, s } = await getPermitNFTSignature(bob, v3NFTPositionManager, router.address, tokenIdv3, MAX_UINT)
         const erc721PermitParams = {
           spender: router.address,
@@ -779,7 +779,7 @@ describe('V3 to V4 Migration Tests:', () => {
         let position = await v3NFTPositionManager.positions(tokenIdv3)
         let liquidity = position.liquidity
 
-        // approved on the decrease call
+        // decrease 调用已获授权
         const decreaseParams = {
           tokenId: tokenIdv3,
           liquidity: liquidity,
@@ -790,7 +790,7 @@ describe('V3 to V4 Migration Tests:', () => {
 
         const encodedDecreaseCall = encodeDecreaseLiquidity(decreaseParams)
 
-        // not approved on the collect call
+        // collect 调用未获授权
         const collectParams = {
           tokenId: BigNumber.from(1),
           recipient: bob.address,
@@ -809,7 +809,7 @@ describe('V3 to V4 Migration Tests:', () => {
       })
 
       it('address cannot call collect if unapproved for that tokenid', async () => {
-        // first we need to permit the router to spend the nft
+        // 首先需要通过 permit 允许路由器使用该 NFT
         let { v, r, s } = await getPermitNFTSignature(bob, v3NFTPositionManager, router.address, tokenIdv3, MAX_UINT)
         const erc721PermitParams = {
           spender: router.address,
@@ -830,7 +830,7 @@ describe('V3 to V4 Migration Tests:', () => {
         let position = await v3NFTPositionManager.positions(tokenIdv3)
         let liquidity = position.liquidity
 
-        // approved on the decrease call
+        // decrease 调用已获授权
         const decreaseParams = {
           tokenId: tokenIdv3,
           liquidity: liquidity,
@@ -855,7 +855,7 @@ describe('V3 to V4 Migration Tests:', () => {
         planner = new RoutePlanner()
         planner.addCommand(CommandType.V3_POSITION_MANAGER_CALL, [encodedCollectCall])
 
-        // not approved on the collect call
+        // collect 调用未获授权
         await expect(
           executeRouter(planner, eve, router, wethContract, daiContract, usdcContract)
         ).to.be.revertedWithCustomError(router, 'NotAuthorizedForToken')
@@ -864,7 +864,7 @@ describe('V3 to V4 Migration Tests:', () => {
 
     describe('burn liquidity', () => {
       it('burn succeeds', async () => {
-        // first we need to permit the router to spend the nft
+        // 首先需要通过 permit 允许路由器使用该 NFT
         let { v, r, s } = await getPermitNFTSignature(bob, v3NFTPositionManager, router.address, tokenIdv3, MAX_UINT)
         const erc721PermitParams = {
           spender: router.address,
@@ -913,7 +913,7 @@ describe('V3 to V4 Migration Tests:', () => {
       })
 
       it('burn fails if you arent approved spender of nft', async () => {
-        // first we need to permit the router to spend the nft
+        // 首先需要通过 permit 允许路由器使用该 NFT
         let { v, r, s } = await getPermitNFTSignature(bob, v3NFTPositionManager, router.address, tokenIdv3, MAX_UINT)
         const erc721PermitParams = {
           spender: router.address,
@@ -953,7 +953,7 @@ describe('V3 to V4 Migration Tests:', () => {
         planner.addCommand(CommandType.V3_POSITION_MANAGER_CALL, [encodedDecreaseCall])
         planner.addCommand(CommandType.V3_POSITION_MANAGER_CALL, [encodedCollectCall])
 
-        // bob decreases and collects the liquidity
+        // bob 减少并收取流动性
         await executeRouter(planner, bob, router, wethContract, daiContract, usdcContract)
 
         planner = new RoutePlanner()
@@ -962,7 +962,7 @@ describe('V3 to V4 Migration Tests:', () => {
 
         planner.addCommand(CommandType.V3_POSITION_MANAGER_CALL, [encodedBurnCall])
 
-        // eve tries to burn the token - she is not approved to do so
+        // eve 尝试销毁该代币——她未获授权
         await expect(
           executeRouter(planner, eve, router, wethContract, daiContract, usdcContract)
         ).to.be.revertedWithCustomError(router, 'NotAuthorizedForToken')
@@ -972,7 +972,7 @@ describe('V3 to V4 Migration Tests:', () => {
 
   describe('V4 Commands', () => {
     beforeEach(async () => {
-      // initialize new pool on v4
+      // 在 V4 上初始化新池
       planner.addCommand(CommandType.V4_INITIALIZE_POOL, [USDC_WETH.poolKey, USDC_WETH.price])
       await executeRouter(planner, bob, router, wethContract, daiContract, usdcContract)
       planner = new RoutePlanner()
@@ -982,7 +982,7 @@ describe('V3 to V4 Migration Tests:', () => {
       const poolKey = {
         currency0: USDC.address,
         currency1: WETH.address,
-        fee: FeeAmount.HIGH, // to make it different to USDC_WETH.poolKey
+        fee: FeeAmount.HIGH, // 使其与 USDC_WETH.poolKey 不同
         tickSpacing: 10,
         hooks: '0x0000000000000000000000000000000000000000',
       }
@@ -990,7 +990,7 @@ describe('V3 to V4 Migration Tests:', () => {
       planner.addCommand(CommandType.V4_INITIALIZE_POOL, [poolKey, USDC_WETH.price])
       let tx = await executeRouter(planner, bob, router, wethContract, daiContract, usdcContract)
 
-      // check that an initialize event was emitted on the pool manager
+      // 检查 pool manager 上触发了 initialize 事件
       let receipt = tx.receipt
       let txEvents = parseEvents(poolManagerInterface, receipt)
 
@@ -1004,7 +1004,7 @@ describe('V3 to V4 Migration Tests:', () => {
     })
 
     it('mint v4 succeeds', async () => {
-      // transfer to v4posm
+      // 转账到 v4posm
       await usdcContract.connect(bob).transfer(v4PositionManager.address, expandTo6DecimalsBN(100000))
       await wethContract.connect(bob).transfer(v4PositionManager.address, expandTo18DecimalsBN(100))
 
@@ -1028,11 +1028,11 @@ describe('V3 to V4 Migration Tests:', () => {
 
       planner.addCommand(CommandType.V4_POSITION_MANAGER_CALL, [calldata])
 
-      // assert that the posm holds tokens before executeRouter
+      // 断言在 executeRouter 之前 posm 持有代币
       expect(await usdcContract.balanceOf(v4PositionManager.address)).to.eq(expandTo6DecimalsBN(100000))
       expect(await wethContract.balanceOf(v4PositionManager.address)).to.eq(expandTo18DecimalsBN(100))
 
-      // bob does not own a position
+      // bob 未持有头寸
       expect(await v4PositionManager.balanceOf(bob.address)).to.eq(0)
 
       let expectedTokenId = await v4PositionManager.nextTokenId()
@@ -1041,23 +1041,23 @@ describe('V3 to V4 Migration Tests:', () => {
 
       await executeRouter(planner, bob, router, wethContract, daiContract, usdcContract)
 
-      // bob successfully sweeped his usdc and weth from the v4 position manager
+      // bob 成功从 v4 position manager 清扫出他的 USDC 和 WETH
       expect(await wethContract.balanceOf(v4PositionManager.address)).to.eq(0)
       expect(await usdcContract.balanceOf(v4PositionManager.address)).to.eq(0)
       expect(await usdcContract.balanceOf(bob.address)).to.be.gt(bobUSDCBalanceBefore)
       expect(await wethContract.balanceOf(bob.address)).to.be.gt(bobWETHBalanceBefore)
 
-      // bob owns a position
+      // bob 持有一个头寸
       expect(await v4PositionManager.balanceOf(bob.address)).to.eq(1)
       expect(await v4PositionManager.ownerOf(expectedTokenId)).to.eq(bob.address)
     })
 
     it('an address can mint on behalf of another address', async () => {
-      // transfer to v4posm
+      // 转账到 v4posm
       await usdcContract.connect(bob).transfer(v4PositionManager.address, expandTo6DecimalsBN(100000))
       await wethContract.connect(bob).transfer(v4PositionManager.address, expandTo18DecimalsBN(100))
 
-      // mint params for bob
+      // bob 的铸造参数
       v4Planner.addAction(Actions.MINT_POSITION, [
         USDC_WETH.poolKey,
         USDC_WETH.tickLower,
@@ -1078,30 +1078,30 @@ describe('V3 to V4 Migration Tests:', () => {
 
       planner.addCommand(CommandType.V4_POSITION_MANAGER_CALL, [calldata])
 
-      // bob does not own a position
+      // bob 未持有头寸
       expect(await v4PositionManager.balanceOf(bob.address)).to.eq(0)
-      // alice does not own a position
+      // alice 未持有头寸
       expect(await v4PositionManager.balanceOf(alice.address)).to.eq(0)
 
       let expectedTokenId = await v4PositionManager.nextTokenId()
 
-      // alice mints a position for bob
+      // alice 为 bob 铸造头寸
       await executeRouter(planner, alice, router, wethContract, daiContract, usdcContract)
 
-      // bob owns a position
+      // bob 持有一个头寸
       expect(await v4PositionManager.balanceOf(bob.address)).to.eq(1)
-      // alice does not own a position
+      // alice 未持有头寸
       expect(await v4PositionManager.balanceOf(alice.address)).to.eq(0)
 
       expect(await v4PositionManager.ownerOf(expectedTokenId)).to.eq(bob.address)
     })
 
     it('erc721 permit on v4 fails with invalid selector', async () => {
-      // transfer to v4posm
+      // 转账到 v4posm
       await usdcContract.connect(bob).transfer(v4PositionManager.address, expandTo6DecimalsBN(100000))
       await wethContract.connect(bob).transfer(v4PositionManager.address, expandTo18DecimalsBN(100))
 
-      // mint position first
+      // 先铸造头寸
       v4Planner.addAction(Actions.MINT_POSITION, [
         USDC_WETH.poolKey,
         USDC_WETH.tickLower,
@@ -1124,7 +1124,7 @@ describe('V3 to V4 Migration Tests:', () => {
 
       let expectedTokenId = await v4PositionManager.nextTokenId()
 
-      // router is not approved to spend the token
+      // 路由器未获授权使用该代币
       expect(await v4PositionManager.getApproved(expectedTokenId)).to.eq(ZERO_ADDRESS)
 
       const { compact } = await getPermitV4Signature(
@@ -1154,10 +1154,10 @@ describe('V3 to V4 Migration Tests:', () => {
     })
 
     it('increase v4 fails', async () => {
-      // transfer to v4posm
+      // 转账到 v4posm
       await usdcContract.connect(bob).transfer(v4PositionManager.address, expandTo6DecimalsBN(100000))
       await wethContract.connect(bob).transfer(v4PositionManager.address, expandTo18DecimalsBN(100))
-      // mint position first
+      // 先铸造头寸
       v4Planner.addAction(Actions.MINT_POSITION, [
         USDC_WETH.poolKey,
         USDC_WETH.tickLower,
@@ -1181,10 +1181,10 @@ describe('V3 to V4 Migration Tests:', () => {
       let expectedTokenId = await v4PositionManager.nextTokenId()
 
       await executeRouter(planner, bob, router, wethContract, daiContract, usdcContract)
-      // bob owns a position
+      // bob 持有一个头寸
       expect(await v4PositionManager.balanceOf(bob.address)).to.eq(1)
 
-      // increase position second
+      // 再增加头寸
       planner = new RoutePlanner()
       v4Planner = new V4Planner()
       await usdcContract.connect(bob).transfer(v4PositionManager.address, expandTo6DecimalsBN(10000))
@@ -1201,7 +1201,7 @@ describe('V3 to V4 Migration Tests:', () => {
 
       planner.addCommand(CommandType.V4_POSITION_MANAGER_CALL, [calldata])
 
-      // assert that the posm holds tokens before executeRouter
+      // 断言在 executeRouter 之前 posm 持有代币
       expect(await usdcContract.balanceOf(v4PositionManager.address)).to.eq(expandTo6DecimalsBN(10000))
       expect(await wethContract.balanceOf(v4PositionManager.address)).to.eq(expandTo18DecimalsBN(10))
 
@@ -1211,8 +1211,8 @@ describe('V3 to V4 Migration Tests:', () => {
     })
 
     it('decrease v4 does not succeed', async () => {
-      // first mint the v4 nft
-      // transfer to v4posm
+      // 先铸造 V4 NFT
+      // 转账到 v4posm
       await usdcContract.connect(bob).transfer(v4PositionManager.address, expandTo6DecimalsBN(100000))
       await wethContract.connect(bob).transfer(v4PositionManager.address, expandTo18DecimalsBN(100))
 
@@ -1240,7 +1240,7 @@ describe('V3 to V4 Migration Tests:', () => {
 
       await executeRouter(planner, bob, router, wethContract, daiContract, usdcContract)
 
-      // try to decrease the position second
+      // 再尝试减少头寸
       planner = new RoutePlanner()
       v4Planner = new V4Planner()
 
@@ -1259,8 +1259,8 @@ describe('V3 to V4 Migration Tests:', () => {
     })
 
     it('burn v4 does not succeed', async () => {
-      // first mint the v4 nft
-      // transfer to v4posm
+      // 先铸造 V4 NFT
+      // 转账到 v4posm
       await usdcContract.connect(bob).transfer(v4PositionManager.address, expandTo6DecimalsBN(100000))
       await wethContract.connect(bob).transfer(v4PositionManager.address, expandTo18DecimalsBN(100))
 
@@ -1288,7 +1288,7 @@ describe('V3 to V4 Migration Tests:', () => {
 
       await executeRouter(planner, bob, router, wethContract, daiContract, usdcContract)
 
-      // try to decrease the position second
+      // 再尝试减少头寸
       planner = new RoutePlanner()
       v4Planner = new V4Planner()
 
@@ -1309,13 +1309,13 @@ describe('V3 to V4 Migration Tests:', () => {
 
   describe('Migration', () => {
     it('migrate with initialize pool and minting succeeds', async () => {
-      // Bob max-approves the v3PM to access his USDC and WETH
+      // Bob 以最大额度授权 v3PM 使用他的 USDC 和 WETH
       await usdcContract.connect(bob).approve(v3NFTPositionManager.address, MAX_UINT)
       await wethContract.connect(bob).approve(v3NFTPositionManager.address, MAX_UINT)
 
       planner.addCommand(CommandType.V4_INITIALIZE_POOL, [USDC_WETH.poolKey, USDC_WETH.price])
 
-      // mint the nft to bob on v3
+      // 在 V3 上将 NFT 铸造给 bob
       const tx = await v3NFTPositionManager.mint({
         token0: USDC.address,
         token1: WETH.address,
@@ -1330,20 +1330,20 @@ describe('V3 to V4 Migration Tests:', () => {
         deadline: MAX_UINT,
       })
 
-      // bob owns a v3position
+      // bob 持有一个 V3 头寸
       expect(await v3NFTPositionManager.balanceOf(bob.address)).to.eq(1)
 
-      // bob does not own a v4position
+      // bob 未持有 V4 头寸
       expect(await v4PositionManager.balanceOf(bob.address)).to.eq(0)
 
       const receipt = await tx.wait()
       const transferEvent = receipt.events?.find((event) => event.event === 'IncreaseLiquidity')
       tokenIdv3 = transferEvent?.args?.tokenId
 
-      // permit, decrease, collect, burn
+      // permit、减少流动性、收取、销毁
       const encodedErc721PermitCall = await permit()
       const encodedDecreaseCall = await decreaseLiquidity()
-      // set receiver to v4posm
+      // 将接收方设为 v4posm
       const encodedCollectCall = collect(v4PositionManager.address)
       const encodedBurnCall = encodeBurn(tokenIdv3)
 
@@ -1376,24 +1376,24 @@ describe('V3 to V4 Migration Tests:', () => {
 
       await executeRouter(planner, bob, router, wethContract, daiContract, usdcContract)
 
-      // bob successfully sweeped his usdc and weth from the v4 position manager
+      // bob 成功从 v4 position manager 清扫出他的 USDC 和 WETH
       expect(await wethContract.balanceOf(v4PositionManager.address)).to.eq(0)
       expect(await usdcContract.balanceOf(v4PositionManager.address)).to.eq(0)
 
-      // bob does not own a v3position
+      // bob 未持有 V3 头寸
       expect(await v3NFTPositionManager.balanceOf(bob.address)).to.eq(0)
 
-      // bob owns a v4position
+      // bob 持有一个 V4 头寸
       expect(await v4PositionManager.balanceOf(bob.address)).to.eq(1)
       expect(await v4PositionManager.ownerOf(expectedTokenId)).to.eq(bob.address)
     })
 
     it('migrate with increasing does not succeed', async () => {
-      // transfer to v4posm
+      // 转账到 v4posm
       await usdcContract.connect(bob).transfer(v4PositionManager.address, expandTo6DecimalsBN(100000))
       await wethContract.connect(bob).transfer(v4PositionManager.address, expandTo18DecimalsBN(100))
 
-      // initialize the pool
+      // 初始化池
       await v4PositionManager.connect(bob).initializePool(USDC_WETH.poolKey, USDC_WETH.price)
 
       v4Planner.addAction(Actions.MINT_POSITION, [
@@ -1420,24 +1420,24 @@ describe('V3 to V4 Migration Tests:', () => {
 
       await executeRouter(planner, bob, router, wethContract, daiContract, usdcContract)
 
-      // bob does not own a v3position
+      // bob 未持有 V3 头寸
       expect(await v3NFTPositionManager.balanceOf(bob.address)).to.eq(0)
 
-      // bob owns a v4position
+      // bob 持有一个 V4 头寸
       expect(await v4PositionManager.balanceOf(bob.address)).to.eq(1)
 
-      // bob successfully sweeped his usdc and weth from the v4 position manager
+      // bob 成功从 v4 position manager 清扫出他的 USDC 和 WETH
       expect(await wethContract.balanceOf(v4PositionManager.address)).to.eq(0)
       expect(await usdcContract.balanceOf(v4PositionManager.address)).to.eq(0)
 
-      // migrate with increasing
+      // 迁移并增加流动性
       planner = new RoutePlanner()
       v4Planner = new V4Planner()
-      // Bob max-approves the v3PM to access his USDC and WETH
+      // Bob 以最大额度授权 v3PM 使用他的 USDC 和 WETH
       await usdcContract.connect(bob).approve(v3NFTPositionManager.address, MAX_UINT)
       await wethContract.connect(bob).approve(v3NFTPositionManager.address, MAX_UINT)
 
-      // mint the nft to bob on v3
+      // 在 V3 上将 NFT 铸造给 bob
       const tx = await v3NFTPositionManager.mint({
         token0: USDC.address,
         token1: WETH.address,
@@ -1456,13 +1456,13 @@ describe('V3 to V4 Migration Tests:', () => {
       const transferEvent = receipt.events?.find((event) => event.event === 'IncreaseLiquidity')
       tokenIdv3 = transferEvent?.args?.tokenId
 
-      // bob owns a v3position
+      // bob 持有一个 V3 头寸
       expect(await v3NFTPositionManager.balanceOf(bob.address)).to.eq(1)
 
-      // permit, decrease, collect, burn
+      // permit、减少流动性、收取、销毁
       let encodedErc721PermitCall = await permit()
       const encodedDecreaseCall = await decreaseLiquidity()
-      // set receiver to v4posm
+      // 将接收方设为 v4posm
       const encodedCollectCall = collect(v4PositionManager.address)
       const encodedBurnCall = encodeBurn(tokenIdv3)
 
@@ -1471,7 +1471,7 @@ describe('V3 to V4 Migration Tests:', () => {
       planner.addCommand(CommandType.V3_POSITION_MANAGER_CALL, [encodedCollectCall])
       planner.addCommand(CommandType.V3_POSITION_MANAGER_CALL, [encodedBurnCall])
 
-      // need to permit the router to spend the nft first
+      // 需要先通过 permit 允许路由器使用该 NFT
       let { compact } = await getPermitV4Signature(bob, v4PositionManager, router.address, expectedTokenId, MAX_UINT, {
         nonce: 1,
       })
@@ -1488,7 +1488,7 @@ describe('V3 to V4 Migration Tests:', () => {
 
       planner.addCommand(CommandType.V4_POSITION_MANAGER_CALL, [encodedErc721PermitCall])
 
-      // increase params for bob's position
+      // bob 头寸的增加流动性参数
       v4Planner.addAction(Actions.INCREASE_LIQUIDITY, [expectedTokenId, '6000000', MAX_UINT128, MAX_UINT128, '0x'])
 
       v4Planner.addAction(Actions.SETTLE, [USDC.address, OPEN_DELTA, SOURCE_ROUTER])
@@ -1500,8 +1500,8 @@ describe('V3 to V4 Migration Tests:', () => {
 
       planner.addCommand(CommandType.V4_POSITION_MANAGER_CALL, [calldata])
 
-      // Need to "un-permit" the router (permit address 0) so that the router can no longer spend the nft
-      // if the router is not unpermitted, anyone can call V4_POSITION_MANAGER_CALL and decrease / burn the position
+      // 需要对路由器“取消 permit”（permit 给地址 0），使路由器无法再使用该 NFT
+      // 如果不取消路由器的 permit，任何人都可以调用 V4_POSITION_MANAGER_CALL 来减少流动性 / 销毁该头寸
       compact = (
         await getPermitV4Signature(bob, v4PositionManager, ZERO_ADDRESS, expectedTokenId, MAX_UINT, { nonce: 2 })
       ).compact
@@ -1524,13 +1524,13 @@ describe('V3 to V4 Migration Tests:', () => {
     })
 
     it('migrate a weth position into an eth position by forwarding eth, with initialize pool', async () => {
-      // Bob max-approves the v3PM to access his USDC and WETH
+      // Bob 以最大额度授权 v3PM 使用他的 USDC 和 WETH
       await usdcContract.connect(bob).approve(v3NFTPositionManager.address, MAX_UINT)
       await wethContract.connect(bob).approve(v3NFTPositionManager.address, MAX_UINT)
 
       planner.addCommand(CommandType.V4_INITIALIZE_POOL, [ETH_USDC.poolKey, ETH_USDC.price])
 
-      // mint the nft to bob on v3
+      // 在 V3 上将 NFT 铸造给 bob
       const tx = await v3NFTPositionManager.mint({
         token0: USDC.address,
         token1: WETH.address,
@@ -1545,20 +1545,20 @@ describe('V3 to V4 Migration Tests:', () => {
         deadline: MAX_UINT,
       })
 
-      // bob owns a v3position
+      // bob 持有一个 V3 头寸
       expect(await v3NFTPositionManager.balanceOf(bob.address)).to.eq(1)
 
-      // bob does not own a v4position
+      // bob 未持有 V4 头寸
       expect(await v4PositionManager.balanceOf(bob.address)).to.eq(0)
 
       const receipt = await tx.wait()
       const transferEvent = receipt.events?.find((event) => event.event === 'IncreaseLiquidity')
       tokenIdv3 = transferEvent?.args?.tokenId
 
-      // permit, decrease, collect, burn
+      // permit、减少流动性、收取、销毁
       const encodedErc721PermitCall = await permit()
       const encodedDecreaseCall = await decreaseLiquidity()
-      // set receiver to v4posm
+      // 将接收方设为 v4posm
       const encodedCollectCall = collect(router.address)
       const encodedBurnCall = encodeBurn(tokenIdv3)
 
@@ -1567,10 +1567,10 @@ describe('V3 to V4 Migration Tests:', () => {
       planner.addCommand(CommandType.V3_POSITION_MANAGER_CALL, [encodedCollectCall])
       planner.addCommand(CommandType.V3_POSITION_MANAGER_CALL, [encodedBurnCall])
 
-      // unwrap weth to eth and set router as recipient
+      // 将 WETH 解包为 ETH，并将路由器设为接收方
       planner.addCommand(CommandType.UNWRAP_WETH, [router.address, 0])
 
-      // transfer usdc to v4 position manager
+      // 将 USDC 转账到 v4 position manager
       planner.addCommand(CommandType.TRANSFER, [USDC.address, v4PositionManager.address, CONTRACT_BALANCE])
 
       v4Planner.addAction(Actions.MINT_POSITION, [
@@ -1591,21 +1591,21 @@ describe('V3 to V4 Migration Tests:', () => {
 
       let calldata = encodeModifyLiquidities({ unlockData: v4Planner.finalize(), deadline: MAX_UINT })
 
-      // mint the v4 position and transfer eth to the v4 position manager
+      // 铸造 V4 头寸，并将 ETH 转账到 v4 position manager
       planner.addCommand(CommandType.V4_POSITION_MANAGER_CALL, [calldata])
 
       let expectedTokenId = await v4PositionManager.nextTokenId()
 
       await executeRouter(planner, bob, router, wethContract, daiContract, usdcContract)
 
-      // bob successfully sweeped his usdc and weth from the v4 position manager
+      // bob 成功从 v4 position manager 清扫出他的 USDC 和 WETH
       expect(await wethContract.balanceOf(v4PositionManager.address)).to.eq(0)
       expect(await usdcContract.balanceOf(v4PositionManager.address)).to.eq(0)
 
-      // bob does not own a v3position
+      // bob 未持有 V3 头寸
       expect(await v3NFTPositionManager.balanceOf(bob.address)).to.eq(0)
 
-      // bob owns a v4position
+      // bob 持有一个 V4 头寸
       expect(await v4PositionManager.balanceOf(bob.address)).to.eq(1)
       expect(await v4PositionManager.ownerOf(expectedTokenId)).to.eq(bob.address)
     })
@@ -1642,7 +1642,7 @@ describe('V3 to V4 Migration Tests:', () => {
   }
 
   function collect(recipient: string): string {
-    // set receiver to v4posm
+    // 将接收方设为 v4posm
     const collectParams = {
       tokenId: tokenIdv3,
       recipient: recipient,

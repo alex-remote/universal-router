@@ -3,18 +3,18 @@ pragma solidity >=0.8.0;
 
 import {IUniswapV2Pair} from '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
 
-/// @title Uniswap v2 Helper Library
-/// @notice Calculates the recipient address for a command
+/// @title Uniswap v2 辅助库
+/// @notice 计算某个命令的接收方地址
 library UniswapV2Library {
     error InvalidReserves();
     error InvalidPath();
 
-    /// @notice Calculates the v2 address for a pair without making any external calls
-    /// @param factory The address of the v2 factory
-    /// @param initCodeHash The hash of the pair initcode
-    /// @param tokenA One of the tokens in the pair
-    /// @param tokenB The other token in the pair
-    /// @return pair The resultant v2 pair address
+    /// @notice 在不进行任何外部调用的情况下计算交易对的 v2 地址
+    /// @param factory v2 工厂合约的地址
+    /// @param initCodeHash 交易对初始化代码（initcode）的哈希
+    /// @param tokenA 交易对中的一个代币
+    /// @param tokenB 交易对中的另一个代币
+    /// @return pair 计算得到的 v2 交易对地址
     function pairFor(address factory, bytes32 initCodeHash, address tokenA, address tokenB)
         internal
         pure
@@ -24,13 +24,13 @@ library UniswapV2Library {
         pair = pairForPreSorted(factory, initCodeHash, token0, token1);
     }
 
-    /// @notice Calculates the v2 address for a pair and the pair's token0
-    /// @param factory The address of the v2 factory
-    /// @param initCodeHash The hash of the pair initcode
-    /// @param tokenA One of the tokens in the pair
-    /// @param tokenB The other token in the pair
-    /// @return pair The resultant v2 pair address
-    /// @return token0 The token considered token0 in this pair
+    /// @notice 计算交易对的 v2 地址以及该交易对的 token0
+    /// @param factory v2 工厂合约的地址
+    /// @param initCodeHash 交易对初始化代码（initcode）的哈希
+    /// @param tokenA 交易对中的一个代币
+    /// @param tokenB 交易对中的另一个代币
+    /// @return pair 计算得到的 v2 交易对地址
+    /// @return token0 在该交易对中被视为 token0 的代币
     function pairAndToken0For(address factory, bytes32 initCodeHash, address tokenA, address tokenB)
         internal
         pure
@@ -41,12 +41,12 @@ library UniswapV2Library {
         pair = pairForPreSorted(factory, initCodeHash, token0, token1);
     }
 
-    /// @notice Calculates the v2 address for a pair assuming the input tokens are pre-sorted
-    /// @param factory The address of the v2 factory
-    /// @param initCodeHash The hash of the pair initcode
-    /// @param token0 The pair's token0
-    /// @param token1 The pair's token1
-    /// @return pair The resultant v2 pair address
+    /// @notice 在假定输入代币已预先排序的前提下计算交易对的 v2 地址
+    /// @param factory v2 工厂合约的地址
+    /// @param initCodeHash 交易对初始化代码（initcode）的哈希
+    /// @param token0 交易对的 token0
+    /// @param token1 交易对的 token1
+    /// @return pair 计算得到的 v2 交易对地址
     function pairForPreSorted(address factory, bytes32 initCodeHash, address token0, address token1)
         private
         pure
@@ -63,14 +63,14 @@ library UniswapV2Library {
         );
     }
 
-    /// @notice Calculates the v2 address for a pair and fetches the reserves for each token
-    /// @param factory The address of the v2 factory
-    /// @param initCodeHash The hash of the pair initcode
-    /// @param tokenA One of the tokens in the pair
-    /// @param tokenB The other token in the pair
-    /// @return pair The resultant v2 pair address
-    /// @return reserveA The reserves for tokenA
-    /// @return reserveB The reserves for tokenB
+    /// @notice 计算交易对的 v2 地址，并获取每个代币的储备量
+    /// @param factory v2 工厂合约的地址
+    /// @param initCodeHash 交易对初始化代码（initcode）的哈希
+    /// @param tokenA 交易对中的一个代币
+    /// @param tokenB 交易对中的另一个代币
+    /// @return pair 计算得到的 v2 交易对地址
+    /// @return reserveA tokenA 的储备量
+    /// @return reserveB tokenB 的储备量
     function pairAndReservesFor(address factory, bytes32 initCodeHash, address tokenA, address tokenB)
         private
         view
@@ -82,11 +82,11 @@ library UniswapV2Library {
         (reserveA, reserveB) = tokenA == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
     }
 
-    /// @notice Given an input asset amount returns the maximum output amount of the other asset
-    /// @param amountIn The token input amount
-    /// @param reserveIn The reserves available of the input token
-    /// @param reserveOut The reserves available of the output token
-    /// @return amountOut The output amount of the output token
+    /// @notice 给定一种资产的输入数量，返回另一种资产的最大输出数量
+    /// @param amountIn 代币的输入数量
+    /// @param reserveIn 输入代币的可用储备量
+    /// @param reserveOut 输出代币的可用储备量
+    /// @return amountOut 输出代币的输出数量
     function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut)
         internal
         pure
@@ -99,11 +99,11 @@ library UniswapV2Library {
         amountOut = numerator / denominator;
     }
 
-    /// @notice Returns the input amount needed for a desired output amount in a single-hop trade
-    /// @param amountOut The desired output amount
-    /// @param reserveIn The reserves available of the input token
-    /// @param reserveOut The reserves available of the output token
-    /// @return amountIn The input amount of the input token
+    /// @notice 返回单跳交易中获得期望输出数量所需的输入数量
+    /// @param amountOut 期望的输出数量
+    /// @param reserveIn 输入代币的可用储备量
+    /// @param reserveOut 输出代币的可用储备量
+    /// @return amountIn 输入代币的输入数量
     function getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut)
         internal
         pure
@@ -115,13 +115,13 @@ library UniswapV2Library {
         amountIn = (numerator / denominator) + 1;
     }
 
-    /// @notice Returns the input amount needed for a desired output amount in a multi-hop trade
-    /// @param factory The address of the v2 factory
-    /// @param initCodeHash The hash of the pair initcode
-    /// @param amountOut The desired output amount
-    /// @param path The path of the multi-hop trade
-    /// @return amount The input amount of the input token
-    /// @return pair The first pair in the trade
+    /// @notice 返回多跳交易中获得期望输出数量所需的输入数量
+    /// @param factory v2 工厂合约的地址
+    /// @param initCodeHash 交易对初始化代码（initcode）的哈希
+    /// @param amountOut 期望的输出数量
+    /// @param path 多跳交易的路径
+    /// @return amount 输入代币的输入数量
+    /// @return pair 交易中的第一个交易对
     function getAmountInMultihop(address factory, bytes32 initCodeHash, uint256 amountOut, address[] calldata path)
         internal
         view
@@ -138,11 +138,11 @@ library UniswapV2Library {
         }
     }
 
-    /// @notice Sorts two tokens to return token0 and token1
-    /// @param tokenA The first token to sort
-    /// @param tokenB The other token to sort
-    /// @return token0 The smaller token by address value
-    /// @return token1 The larger token by address value
+    /// @notice 对两个代币排序，返回 token0 和 token1
+    /// @param tokenA 待排序的第一个代币
+    /// @param tokenB 待排序的另一个代币
+    /// @return token0 按地址值较小的代币
+    /// @return token1 按地址值较大的代币
     function sortTokens(address tokenA, address tokenB) internal pure returns (address token0, address token1) {
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
     }

@@ -133,7 +133,7 @@ contract UniversalRouterTest is Test {
     function testPayPortionFullPrecisionInvalidPortion() public {
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.PAY_PORTION_FULL_PRECISION)));
         bytes[] memory inputs = new bytes[](1);
-        // portion > 1e18 should revert
+        // portion > 1e18 应当回滚（revert）
         inputs[0] = abi.encode(address(erc20), RECIPIENT, 1e18 + 1);
 
         erc20.mint(address(router), AMOUNT);
@@ -145,7 +145,7 @@ contract UniversalRouterTest is Test {
     function testPayPortionFullPrecisionSmallFraction() public {
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.PAY_PORTION_FULL_PRECISION)));
         bytes[] memory inputs = new bytes[](1);
-        // 0.0001% = 1e12 (precision beyond bips)
+        // 0.0001% = 1e12（精度超出基点 bips）
         inputs[0] = abi.encode(address(erc20), RECIPIENT, 1e12);
 
         erc20.mint(address(router), AMOUNT);

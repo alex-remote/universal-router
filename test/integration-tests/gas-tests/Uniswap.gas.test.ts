@@ -49,7 +49,7 @@ describe('Uniswap Gas Tests', () => {
   let wethContract: Contract
   let planner: RoutePlanner
 
-  // 6 pairs for gas tests with high numbers of trades
+  // 6 个交易对，用于大量交易的 gas 测试
   let pair_DAI_WETH: Pair
   let pair_DAI_USDC: Pair
   let pair_USDC_WETH: Pair
@@ -70,11 +70,11 @@ describe('Uniswap Gas Tests', () => {
     pair_DAI_USDC = await makePair(bob, DAI, USDC)
     pair_USDC_WETH = await makePair(bob, USDC, WETH)
 
-    // alice gives bob some tokens
+    // alice 给 bob 一些代币
     await daiContract.connect(alice).transfer(bob.address, expandTo18DecimalsBN(100000))
     await wethContract.connect(alice).transfer(bob.address, expandTo18DecimalsBN(100))
 
-    // Bob max-approves the permit2 contract to access his DAI and WETH
+    // Bob 给 permit2 合约最大额度授权，使其可动用他的 DAI 和 WETH
     await daiContract.connect(bob).approve(permit2.address, MAX_UINT)
     await wethContract.connect(bob).approve(permit2.address, MAX_UINT)
   })
@@ -179,7 +179,7 @@ describe('Uniswap Gas Tests', () => {
 
       beforeEach(async () => {
         planner = new RoutePlanner()
-        // for these tests Bob gives the router max approval on permit2
+        // 在这些测试中，Bob 在 permit2 上给路由器最大额度授权
         await permit2.connect(bob).approve(DAI.address, router.address, MAX_UINT160, DEADLINE)
         await permit2.connect(bob).approve(WETH.address, router.address, MAX_UINT160, DEADLINE)
       })
@@ -257,7 +257,7 @@ describe('Uniswap Gas Tests', () => {
         })
 
         it('gas: exactIn trade, where an output fee is taken', async () => {
-          // back to the router so someone can take a fee
+          // 发回路由器，以便有人可以收取手续费
           planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
             router.address,
             amountIn,
@@ -375,7 +375,7 @@ describe('Uniswap Gas Tests', () => {
           const minAmountOut = expandTo18DecimalsBN(0.001)
           const pairAddress = Pair.getAddress(DAI, WETH)
           planner.addCommand(CommandType.WRAP_ETH, [pairAddress, amountIn])
-          // the money is already in the pair, so amountIn is 0
+          // 资金已在交易对中，因此 amountIn 为 0
           planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
             MSG_SENDER,
             0,
@@ -543,7 +543,7 @@ describe('Uniswap Gas Tests', () => {
       beforeEach(async () => {
         planner = new RoutePlanner()
 
-        // for these tests Bob gives the router max approval on permit2
+        // 在这些测试中，Bob 在 permit2 上给路由器最大额度授权
         await permit2.connect(bob).approve(DAI.address, router.address, MAX_UINT160, DEADLINE)
         await permit2.connect(bob).approve(WETH.address, router.address, MAX_UINT160, DEADLINE)
       })
@@ -595,7 +595,7 @@ describe('Uniswap Gas Tests', () => {
         })
 
         it('gas: exactOut, one trade, two hops', async () => {
-          // trade DAI in for WETH out
+          // 交易：输入 DAI，输出 WETH
           const tokens = [DAI.address, USDC.address, WETH.address]
           const path = encodePathExactOutput(tokens)
 
@@ -613,7 +613,7 @@ describe('Uniswap Gas Tests', () => {
         })
 
         it('gas: exactOut, one trade, three hops', async () => {
-          // trade DAI in for WETH out
+          // 交易：输入 DAI，输出 WETH
           const tokens = [DAI.address, USDC.address, USDT.address, WETH.address]
           const path = encodePathExactOutput(tokens)
 
@@ -642,7 +642,7 @@ describe('Uniswap Gas Tests', () => {
         })
 
         it('gas: exactOut swap', async () => {
-          // trade DAI in for WETH out
+          // 交易：输入 DAI，输出 WETH
           const tokens = [DAI.address, WETH.address]
           const path = encodePathExactOutput(tokens)
           planner.addCommand(CommandType.V3_SWAP_EXACT_OUT, [
@@ -703,7 +703,7 @@ describe('Uniswap Gas Tests', () => {
       beforeEach(async () => {
         planner = new RoutePlanner()
 
-        // Bob max-approves the permit2 contract to access his DAI and WETH
+        // Bob 给 permit2 合约最大额度授权，使其可动用他的 DAI 和 WETH
         await permit2.approve(DAI.address, router.address, MAX_UINT160, DEADLINE)
         await permit2.approve(WETH.address, router.address, MAX_UINT160, DEADLINE)
       })
@@ -724,7 +724,7 @@ describe('Uniswap Gas Tests', () => {
             SOURCE_MSG_SENDER,
             [],
           ])
-          // the tokens are already int he v2 pair, so amountIn is 0
+          // 代币已在 v2 交易对中，因此 amountIn 为 0
           planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
             MSG_SENDER,
             0,
@@ -742,7 +742,7 @@ describe('Uniswap Gas Tests', () => {
           const v2Tokens = [DAI.address, USDC.address]
           const v3Tokens = [USDC.address, WETH.address]
           const v2AmountIn: BigNumber = expandTo18DecimalsBN(5)
-          const v2AmountOutMin = 0 // doesnt matter how much USDC it is, what matters is the end of the trade
+          const v2AmountOutMin = 0 // USDC 数量多少无关紧要，重要的是交易的最终结果
           const v3AmountOutMin = expandTo18DecimalsBN(0.0005)
 
           planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
@@ -776,12 +776,12 @@ describe('Uniswap Gas Tests', () => {
           const minAmountOut1 = expandTo18DecimalsBN(0.005)
           const minAmountOut2 = expandTo18DecimalsBN(0.0075)
 
-          // 1) transfer funds into DAI-USDC and DAI-USDT pairs to trade
+          // 1) 将资金转入 DAI-USDC 和 DAI-USDT 交易对以进行交易
           planner.addCommand(CommandType.PERMIT2_TRANSFER_FROM, [DAI.address, Pair.getAddress(DAI, USDC), v2AmountIn1])
 
           planner.addCommand(CommandType.PERMIT2_TRANSFER_FROM, [DAI.address, Pair.getAddress(DAI, USDT), v2AmountIn2])
 
-          // 2) trade route1 and return tokens to bob
+          // 2) 执行 route1 交易并将代币返还给 bob
           planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
             MSG_SENDER,
             0,
@@ -790,7 +790,7 @@ describe('Uniswap Gas Tests', () => {
             SOURCE_MSG_SENDER,
             [],
           ])
-          // 3) trade route2 and return tokens to bob
+          // 3) 执行 route2 交易并将代币返还给 bob
           planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
             MSG_SENDER,
             0,
@@ -827,10 +827,10 @@ describe('Uniswap Gas Tests', () => {
             },
           ]
 
-          // 1) transfer funds into DAI-USDC and DAI-USDT pairs to trade
+          // 1) 将资金转入 DAI-USDC 和 DAI-USDT 交易对以进行交易
           planner.addCommand(CommandType.PERMIT2_TRANSFER_FROM_BATCH, [BATCH_TRANSFER])
 
-          // 2) trade route1 and return tokens to bob
+          // 2) 执行 route1 交易并将代币返还给 bob
           planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
             MSG_SENDER,
             0,
@@ -839,7 +839,7 @@ describe('Uniswap Gas Tests', () => {
             SOURCE_MSG_SENDER,
             [],
           ])
-          // 3) trade route2 and return tokens to bob
+          // 3) 执行 route2 交易并将代币返还给 bob
           planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
             MSG_SENDER,
             0,
@@ -854,7 +854,7 @@ describe('Uniswap Gas Tests', () => {
         })
 
         it('gas: ERC20 --> ERC20 split V2 and V2 different routes, each two hop, without explicit permit', async () => {
-          // this test is the same as the above test, but instead of a permit permit, separate permits within the 2 trades
+          // 此测试与上面的测试相同，但不使用单个 permit，而是在 2 笔交易中分别使用各自的 permit
           const route1 = [DAI.address, USDC.address, WETH.address]
           const route2 = [DAI.address, USDT.address, WETH.address]
           const v2AmountIn1: BigNumber = expandTo18DecimalsBN(20)
@@ -862,7 +862,7 @@ describe('Uniswap Gas Tests', () => {
           const minAmountOut1 = expandTo18DecimalsBN(0.005)
           const minAmountOut2 = expandTo18DecimalsBN(0.0075)
 
-          // 1) trade route1 and return tokens to bob
+          // 1) 执行 route1 交易并将代币返还给 bob
           planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
             MSG_SENDER,
             v2AmountIn1,
@@ -871,7 +871,7 @@ describe('Uniswap Gas Tests', () => {
             SOURCE_MSG_SENDER,
             [],
           ])
-          // 2) trade route2 and return tokens to bob
+          // 2) 执行 route2 交易并将代币返还给 bob
           planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
             MSG_SENDER,
             v2AmountIn2,
@@ -898,14 +898,14 @@ describe('Uniswap Gas Tests', () => {
               {
                 token: DAI.address,
                 amount: v2AmountIn1,
-                expiration: 0, // expiration of 0 is block.timestamp
-                nonce: 0, // this is his first trade
+                expiration: 0, // expiration 为 0 表示 block.timestamp
+                nonce: 0, // 这是他的第一笔交易
               },
               {
                 token: WETH.address,
                 amount: v2AmountIn2,
-                expiration: 0, // expiration of 0 is block.timestamp
-                nonce: 0, // this is his first trade
+                expiration: 0, // expiration 为 0 表示 block.timestamp
+                nonce: 0, // 这是他的第一笔交易
               },
             ],
             spender: router.address,
@@ -914,10 +914,10 @@ describe('Uniswap Gas Tests', () => {
 
           const sig = await getPermitBatchSignature(BATCH_PERMIT, bob, permit2)
 
-          // 1) transfer funds into DAI-USDC and DAI-USDT pairs to trade
+          // 1) 将资金转入 DAI-USDC 和 DAI-USDT 交易对以进行交易
           planner.addCommand(CommandType.PERMIT2_PERMIT_BATCH, [BATCH_PERMIT, sig])
 
-          // 2) trade route1 and return tokens to bob
+          // 2) 执行 route1 交易并将代币返还给 bob
           planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
             MSG_SENDER,
             v2AmountIn1,
@@ -926,7 +926,7 @@ describe('Uniswap Gas Tests', () => {
             SOURCE_MSG_SENDER,
             [],
           ])
-          // 3) trade route2 and return tokens to bob
+          // 3) 执行 route2 交易并将代币返还给 bob
           planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
             MSG_SENDER,
             v2AmountIn2,
@@ -945,7 +945,7 @@ describe('Uniswap Gas Tests', () => {
           const v2AmountIn: BigNumber = expandTo18DecimalsBN(2)
           const v3AmountIn: BigNumber = expandTo18DecimalsBN(3)
 
-          // V2 trades DAI for USDC, sending the tokens back to the router for v3 trade
+          // V2 将 DAI 兑换为 USDC，并把代币发回路由器以供 v3 交易
           planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [
             router.address,
             v2AmountIn,
@@ -954,7 +954,7 @@ describe('Uniswap Gas Tests', () => {
             SOURCE_MSG_SENDER,
             [],
           ])
-          // V3 trades USDC for WETH, trading the whole balance, with a recipient of Alice
+          // V3 将 USDC 兑换为 WETH，兑换全部余额，接收方为 Alice
           planner.addCommand(CommandType.V3_SWAP_EXACT_IN, [
             router.address,
             v3AmountIn,
@@ -963,7 +963,7 @@ describe('Uniswap Gas Tests', () => {
             SOURCE_MSG_SENDER,
             [],
           ])
-          // aggregate slippate check
+          // 汇总滑点检查
           planner.addCommand(CommandType.SWEEP, [WETH.address, MSG_SENDER, expandTo18DecimalsBN(0.0005)])
 
           const { commands, inputs } = planner
@@ -975,9 +975,9 @@ describe('Uniswap Gas Tests', () => {
           const v2AmountIn: BigNumber = expandTo18DecimalsBN(2)
           const v3AmountIn: BigNumber = expandTo18DecimalsBN(3)
 
-          // V2 trades DAI for USDC, sending the tokens back to the router for v3 trade
+          // V2 将 DAI 兑换为 USDC，并把代币发回路由器以供 v3 交易
           planner.addCommand(CommandType.V2_SWAP_EXACT_IN, [ADDRESS_THIS, v2AmountIn, 0, tokens, SOURCE_MSG_SENDER, []])
-          // V3 trades USDC for WETH, trading the whole balance, with a recipient of Alice
+          // V3 将 USDC 兑换为 WETH，兑换全部余额，接收方为 Alice
           planner.addCommand(CommandType.V3_SWAP_EXACT_IN, [
             router.address,
             v3AmountIn,
@@ -986,7 +986,7 @@ describe('Uniswap Gas Tests', () => {
             SOURCE_MSG_SENDER,
             [],
           ])
-          // aggregate slippate check
+          // 汇总滑点检查
           planner.addCommand(CommandType.SWEEP, [WETH.address, MSG_SENDER, expandTo18DecimalsBN(0.0005)])
 
           const { commands, inputs } = planner
@@ -1009,7 +1009,7 @@ describe('Uniswap Gas Tests', () => {
             SOURCE_ROUTER,
             [],
           ])
-          // aggregate slippate check
+          // 汇总滑点检查
           planner.addCommand(CommandType.SWEEP, [USDC.address, MSG_SENDER, 0.0005 * 10 ** 6])
 
           const { commands, inputs } = planner
@@ -1037,7 +1037,7 @@ describe('Uniswap Gas Tests', () => {
             SOURCE_MSG_SENDER,
             [],
           ])
-          // aggregate slippate check
+          // 汇总滑点检查
           planner.addCommand(CommandType.UNWRAP_WETH, [MSG_SENDER, expandTo18DecimalsBN(0.0005)])
 
           const { commands, inputs } = planner
@@ -1068,7 +1068,7 @@ describe('Uniswap Gas Tests', () => {
             SOURCE_MSG_SENDER,
             [],
           ])
-          // aggregate slippate check
+          // 汇总滑点检查
           planner.addCommand(CommandType.UNWRAP_WETH, [MSG_SENDER, fullAmountOut])
 
           const { commands, inputs } = planner
@@ -1089,10 +1089,10 @@ describe('Uniswap Gas Tests', () => {
         })
 
         it('gas: 2 sub-plans, neither fails', async () => {
-          // first split route sub-plan. DAI->WETH, 2 routes on V2 and V3.
+          // 第一个拆分路由子计划。DAI->WETH，V2 和 V3 上共 2 条路由。
           const planOneWethMinOut = expandTo18DecimalsBN(0.0005)
 
-          // V2 trades DAI for USDC, sending the tokens back to the router for v3 trade
+          // V2 将 DAI 兑换为 USDC，并把代币发回路由器以供 v3 交易
           subplan.addCommand(CommandType.V2_SWAP_EXACT_IN, [
             ADDRESS_THIS,
             planOneV2AmountIn,
@@ -1101,7 +1101,7 @@ describe('Uniswap Gas Tests', () => {
             SOURCE_MSG_SENDER,
             [],
           ])
-          // V3 trades USDC for WETH, trading the whole balance, with a recipient of Alice
+          // V3 将 USDC 兑换为 WETH，兑换全部余额，接收方为 Alice
           subplan.addCommand(CommandType.V3_SWAP_EXACT_IN, [
             ADDRESS_THIS,
             planOneV3AmountIn,
@@ -1110,17 +1110,17 @@ describe('Uniswap Gas Tests', () => {
             SOURCE_MSG_SENDER,
             [],
           ])
-          // aggregate slippage check
+          // 汇总滑点检查
           subplan.addCommand(CommandType.SWEEP, [WETH.address, MSG_SENDER, planOneWethMinOut])
 
-          // add the subplan to the main planner
+          // 将子计划添加到主 planner
           planner.addSubPlan(subplan)
           subplan = new RoutePlanner()
 
-          // second split route sub-plan. USDC->WETH, 1 route on V3
+          // 第二个拆分路由子计划。USDC->WETH，V3 上 1 条路由
           const wethMinAmountOut2 = expandTo18DecimalsBN(0.0005)
 
-          // Add the trade to the sub-plan
+          // 将该交易添加到子计划
           subplan.addCommand(CommandType.V3_SWAP_EXACT_IN, [
             MSG_SENDER,
             planTwoV3AmountIn,
@@ -1130,7 +1130,7 @@ describe('Uniswap Gas Tests', () => {
             [],
           ])
 
-          // add the second subplan to the main planner
+          // 将第二个子计划添加到主 planner
           planner.addSubPlan(subplan)
 
           const { commands, inputs } = planner
@@ -1138,11 +1138,11 @@ describe('Uniswap Gas Tests', () => {
         })
 
         it('gas: 2 sub-plans, the first fails', async () => {
-          // first split route sub-plan. DAI->WETH, 2 routes on V2 and V3.
-          // FAIL: large weth amount out to cause a failure
+          // 第一个拆分路由子计划。DAI->WETH，V2 和 V3 上共 2 条路由。
+          // FAIL: 设置很大的 weth 输出数量以导致失败
           const planOneWethMinOut = expandTo18DecimalsBN(1)
 
-          // V2 trades DAI for USDC, sending the tokens back to the router for v3 trade
+          // V2 将 DAI 兑换为 USDC，并把代币发回路由器以供 v3 交易
           subplan.addCommand(CommandType.V2_SWAP_EXACT_IN, [
             ADDRESS_THIS,
             planOneV2AmountIn,
@@ -1151,7 +1151,7 @@ describe('Uniswap Gas Tests', () => {
             SOURCE_MSG_SENDER,
             [],
           ])
-          // V3 trades USDC for WETH, trading the whole balance, with a recipient of Alice
+          // V3 将 USDC 兑换为 WETH，兑换全部余额，接收方为 Alice
           subplan.addCommand(CommandType.V3_SWAP_EXACT_IN, [
             ADDRESS_THIS,
             planOneV3AmountIn,
@@ -1160,17 +1160,17 @@ describe('Uniswap Gas Tests', () => {
             SOURCE_MSG_SENDER,
             [],
           ])
-          // aggregate slippage check
+          // 汇总滑点检查
           subplan.addCommand(CommandType.SWEEP, [WETH.address, MSG_SENDER, planOneWethMinOut])
 
-          // add the subplan to the main planner
+          // 将子计划添加到主 planner
           planner.addSubPlan(subplan)
           subplan = new RoutePlanner()
 
-          // second split route sub-plan. USDC->WETH, 1 route on V3
+          // 第二个拆分路由子计划。USDC->WETH，V3 上 1 条路由
           const wethMinAmountOut2 = expandTo18DecimalsBN(0.0005)
 
-          // Add the trade to the sub-plan
+          // 将该交易添加到子计划
           subplan.addCommand(CommandType.V3_SWAP_EXACT_IN, [
             MSG_SENDER,
             planTwoV3AmountIn,
@@ -1180,7 +1180,7 @@ describe('Uniswap Gas Tests', () => {
             [],
           ])
 
-          // add the second subplan to the main planner
+          // 将第二个子计划添加到主 planner
           planner.addSubPlan(subplan)
 
           const { commands, inputs } = planner
@@ -1188,11 +1188,11 @@ describe('Uniswap Gas Tests', () => {
         })
 
         it('gas: 2 sub-plans, both fail but the transaction succeeds', async () => {
-          // first split route sub-plan. DAI->WETH, 2 routes on V2 and V3.
-          // FAIL: large amount out to cause the swap to revert
+          // 第一个拆分路由子计划。DAI->WETH，V2 和 V3 上共 2 条路由。
+          // FAIL: 设置很大的输出数量，使兑换回滚（revert）
           const planOneWethMinOut = expandTo18DecimalsBN(1)
 
-          // V2 trades DAI for USDC, sending the tokens back to the router for v3 trade
+          // V2 将 DAI 兑换为 USDC，并把代币发回路由器以供 v3 交易
           subplan.addCommand(CommandType.V2_SWAP_EXACT_IN, [
             ADDRESS_THIS,
             planOneV2AmountIn,
@@ -1201,7 +1201,7 @@ describe('Uniswap Gas Tests', () => {
             SOURCE_MSG_SENDER,
             [],
           ])
-          // V3 trades USDC for WETH, trading the whole balance, with a recipient of Alice
+          // V3 将 USDC 兑换为 WETH，兑换全部余额，接收方为 Alice
           subplan.addCommand(CommandType.V3_SWAP_EXACT_IN, [
             ADDRESS_THIS,
             planOneV3AmountIn,
@@ -1210,18 +1210,18 @@ describe('Uniswap Gas Tests', () => {
             SOURCE_MSG_SENDER,
             [],
           ])
-          // aggregate slippage check
+          // 汇总滑点检查
           subplan.addCommand(CommandType.SWEEP, [WETH.address, MSG_SENDER, planOneWethMinOut])
 
-          // add the subplan to the main planner
+          // 将子计划添加到主 planner
           planner.addSubPlan(subplan)
           subplan = new RoutePlanner()
 
-          // second split route sub-plan. USDC->WETH, 1 route on V3
-          // FAIL: large amount out to cause the swap to revert
+          // 第二个拆分路由子计划。USDC->WETH，V3 上 1 条路由
+          // FAIL: 设置很大的输出数量，使兑换回滚（revert）
           const wethMinAmountOut2 = expandTo18DecimalsBN(1)
 
-          // Add the trade to the sub-plan
+          // 将该交易添加到子计划
           subplan.addCommand(CommandType.V3_SWAP_EXACT_IN, [
             MSG_SENDER,
             planTwoV3AmountIn,
@@ -1231,7 +1231,7 @@ describe('Uniswap Gas Tests', () => {
             [],
           ])
 
-          // add the second subplan to the main planner
+          // 将第二个子计划添加到主 planner
           planner.addSubPlan(subplan)
 
           const { commands, inputs } = planner
@@ -1239,10 +1239,10 @@ describe('Uniswap Gas Tests', () => {
         })
 
         it('gas: 2 sub-plans, second sub plan fails', async () => {
-          // first split route sub-plan. DAI->WETH, 2 routes on V2 and V3.
+          // 第一个拆分路由子计划。DAI->WETH，V2 和 V3 上共 2 条路由。
           const planOneWethMinOut = expandTo18DecimalsBN(0.0005)
 
-          // V2 trades DAI for USDC, sending the tokens back to the router for v3 trade
+          // V2 将 DAI 兑换为 USDC，并把代币发回路由器以供 v3 交易
           subplan.addCommand(CommandType.V2_SWAP_EXACT_IN, [
             ADDRESS_THIS,
             planOneV2AmountIn,
@@ -1251,7 +1251,7 @@ describe('Uniswap Gas Tests', () => {
             SOURCE_MSG_SENDER,
             [],
           ])
-          // V3 trades USDC for WETH, trading the whole balance, with a recipient of Alice
+          // V3 将 USDC 兑换为 WETH，兑换全部余额，接收方为 Alice
           subplan.addCommand(CommandType.V3_SWAP_EXACT_IN, [
             ADDRESS_THIS,
             planOneV3AmountIn,
@@ -1260,18 +1260,18 @@ describe('Uniswap Gas Tests', () => {
             SOURCE_MSG_SENDER,
             [],
           ])
-          // aggregate slippage check
+          // 汇总滑点检查
           subplan.addCommand(CommandType.SWEEP, [WETH.address, MSG_SENDER, planOneWethMinOut])
 
-          // add the subplan to the main planner
+          // 将子计划添加到主 planner
           planner.addSubPlan(subplan)
           subplan = new RoutePlanner()
 
-          // second split route sub-plan. USDC->WETH, 1 route on V3
-          // FAIL: large amount out to cause the swap to revert
+          // 第二个拆分路由子计划。USDC->WETH，V3 上 1 条路由
+          // FAIL: 设置很大的输出数量，使兑换回滚（revert）
           const wethMinAmountOut2 = expandTo18DecimalsBN(1)
 
-          // Add the trade to the sub-plan
+          // 将该交易添加到子计划
           subplan.addCommand(CommandType.V3_SWAP_EXACT_IN, [
             MSG_SENDER,
             planTwoV3AmountIn,
@@ -1281,7 +1281,7 @@ describe('Uniswap Gas Tests', () => {
             [],
           ])
 
-          // add the second subplan to the main planner
+          // 将第二个子计划添加到主 planner
           planner.addSubPlan(subplan)
 
           const { commands, inputs } = planner

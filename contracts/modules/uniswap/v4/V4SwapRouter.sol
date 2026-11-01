@@ -13,7 +13,7 @@ import {
     IPermissionsAdapter
 } from '@uniswap/v4-periphery/src/hooks/permissionedPools/interfaces/IPermissionsAdapter.sol';
 
-/// @title Router for Uniswap v4 Trades
+/// @title Uniswap v4 交易路由器
 abstract contract V4SwapRouter is PermissionedV4Router, Permit2Payments {
     constructor(address _poolManager, address _permissionsAdapterFactory)
         PermissionedV4Router(IPoolManager(_poolManager), IPermissionsAdapterFactory(_permissionsAdapterFactory))

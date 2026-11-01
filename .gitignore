@@ -1,9 +1,9 @@
-# Compiler files
+# 编译器文件
 cache/
 cache_hardhat/
 out/
 
-# Ignores development broadcast logs
+# 忽略开发环境的 broadcast 日志
 !/broadcast
 /broadcast/*
 /broadcast/*/31337/
@@ -15,10 +15,10 @@ coverage.json
 typechain
 typechain-types
 
-#Hardhat files
+#Hardhat 文件
 cache
 artifacts
 
-# Yarn files
+# Yarn 文件
 .yarn/
 .yarnrc.yml

@@ -20,13 +20,13 @@ contract ContextCapture {
         router = _router;
     }
 
-    // This function will be called during execution and will try to read the signed context
+    // 此函数会在执行过程中被调用，并尝试读取签名上下文
     function captureContext() external payable {
         (capturedSigner, capturedIntent, capturedData) = router.signedRouteContext();
     }
 
     receive() external payable {
-        // Capture context when receiving ETH
+        // 接收 ETH 时捕获上下文
         (capturedSigner, capturedIntent, capturedData) = router.signedRouteContext();
     }
 }
@@ -39,8 +39,8 @@ contract ReentrantMaliciousContract {
     }
 
     receive() external payable {
-        // Try to reenter executeSigned with arbitrary params
-        // This should revert due to isNotLocked modifier
+        // 尝试用任意参数重入 executeSigned
+        // 由于 isNotLocked 修饰器，这里应回滚（revert）
         bytes memory commands = abi.encodePacked(bytes1(0x00));
         bytes[] memory inputs = new bytes[](0);
 
@@ -56,7 +56,7 @@ contract RouteSignerTest is Test {
     UniversalRouter router;
     ContextCapture capturer;
 
-    // Signer for EIP712 signatures
+    // 用于 EIP712 签名的签名者
     address signer;
     uint256 signerPrivateKey;
 
@@ -109,25 +109,25 @@ contract RouteSignerTest is Test {
             'ExecuteSigned(bytes commands,bytes[] inputs,bytes32 intent,bytes32 data,address sender,bytes32 nonce,uint256 deadline)'
         );
 
-        // Hash inputs array per EIP712
+        // 按 EIP712 规则对 inputs 数组做哈希
         bytes32[] memory inputHashes = new bytes32[](inputs.length);
         for (uint256 i = 0; i < inputs.length; i++) {
             inputHashes[i] = keccak256(inputs[i]);
         }
         bytes32 inputsHash = keccak256(abi.encodePacked(inputHashes));
 
-        // Create struct hash
+        // 构造结构体哈希
         bytes32 structHash = keccak256(
             abi.encode(EXECUTE_SIGNED_TYPEHASH, keccak256(commands), inputsHash, intent, data, sender, nonce, deadline)
         );
 
-        // Get domain separator
+        // 获取域分隔符（domain separator）
         bytes32 domainSeparator = getDomainSeparator();
 
-        // Create digest
+        // 构造摘要（digest）
         bytes32 digest = keccak256(abi.encodePacked('\x19\x01', domainSeparator, structHash));
 
-        // Sign
+        // 签名
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerPrivateKey, digest);
         signature = abi.encodePacked(r, s, v);
     }
@@ -146,16 +146,16 @@ contract RouteSignerTest is Test {
 
         router.executeSigned{value: AMOUNT}(commands, inputs, intent, data, true, nonce, signature, deadline);
 
-        // Verify context was captured correctly during execution
+        // 验证执行过程中正确捕获了上下文
         address expectedSigner = signer;
         assertEq(capturer.capturedSigner(), expectedSigner, 'Signer mismatch during execution');
         assertEq(capturer.capturedIntent(), intent, 'Intent mismatch during execution');
         assertEq(capturer.capturedData(), data, 'Data mismatch during execution');
 
-        // Verify nonce was marked as used
+        // 验证 nonce 已被标记为已使用
         assertTrue(router.noncesUsed(expectedSigner, nonce), 'Nonce should be marked as used');
 
-        // Verify context was cleared after execution
+        // 验证执行结束后上下文已被清除
         (address storedSigner, bytes32 storedIntent, bytes32 storedData) = router.signedRouteContext();
         assertEq(storedSigner, address(0), 'Signer should be cleared after execution');
         assertEq(storedIntent, bytes32(0), 'Intent should be cleared after execution');
@@ -172,22 +172,22 @@ contract RouteSignerTest is Test {
         bytes32 nonce = keccak256('nonce2');
         uint256 deadline = block.timestamp + 1000;
 
-        // Sign with address(this) as sender
+        // 以 address(this) 作为 sender 进行签名
         bytes memory signature = signExecution(commands, inputs, intent, data, address(this), nonce, deadline);
 
-        // Try to call from a different address
+        // 尝试从另一个地址调用
         address alice = makeAddr('alice');
         vm.deal(alice, AMOUNT);
         vm.prank(alice);
 
-        // Won't revert but will recover wrong signer
+        // 不会回滚（revert），但会恢复出错误的签名者
         router.executeSigned{value: AMOUNT}(commands, inputs, intent, data, true, nonce, signature, deadline);
 
-        // Verify the recovered signer is NOT the expected signer
+        // 验证恢复出的签名者不是预期的签名者
         address expectedSigner = signer;
         assertTrue(capturer.capturedSigner() != expectedSigner, 'Signer should not match when called from wrong sender');
 
-        // But intent and data should still be stored correctly
+        // 但 intent 和 data 仍应被正确存储
         assertEq(capturer.capturedIntent(), intent, 'Intent should match');
         assertEq(capturer.capturedData(), data, 'Data should match');
     }
@@ -202,17 +202,17 @@ contract RouteSignerTest is Test {
         bytes32 nonce = keccak256('nonce3');
         uint256 deadline = block.timestamp + 1000;
 
-        // Sign with address(0) as sender (no sender verification)
+        // 以 address(0) 作为 sender 进行签名（不校验 sender）
         bytes memory signature = signExecution(commands, inputs, intent, data, address(0), nonce, deadline);
 
-        // Call from a different address
+        // 从另一个地址调用
         address bob = makeAddr('bob');
         vm.deal(bob, AMOUNT);
         vm.prank(bob);
 
         router.executeSigned{value: AMOUNT}(commands, inputs, intent, data, false, nonce, signature, deadline);
 
-        // Verify context was captured correctly during execution
+        // 验证执行过程中正确捕获了上下文
         address expectedSigner = signer;
         assertEq(capturer.capturedSigner(), expectedSigner, 'Signer mismatch during execution');
         assertEq(capturer.capturedIntent(), intent, 'Intent mismatch during execution');
@@ -220,7 +220,7 @@ contract RouteSignerTest is Test {
     }
 
     function testExecuteSignedMultipleCommands() public {
-        // Create 3 transfer commands
+        // 创建 3 条转账命令
         bytes memory commands = abi.encodePacked(
             bytes1(uint8(Commands.TRANSFER)), bytes1(uint8(Commands.TRANSFER)), bytes1(uint8(Commands.TRANSFER))
         );
@@ -230,7 +230,7 @@ contract RouteSignerTest is Test {
 
         bytes[] memory inputs = new bytes[](3);
         inputs[0] = abi.encode(Constants.ETH, recipient1, AMOUNT / 3);
-        inputs[1] = abi.encode(Constants.ETH, address(capturer), AMOUNT / 3); // This will trigger receive() and capture context
+        inputs[1] = abi.encode(Constants.ETH, address(capturer), AMOUNT / 3); // 这会触发 receive() 并捕获上下文
         inputs[2] = abi.encode(Constants.ETH, recipient2, AMOUNT / 3);
 
         bytes32 intent = keccak256('multi-command-intent');
@@ -242,17 +242,17 @@ contract RouteSignerTest is Test {
 
         router.executeSigned{value: AMOUNT}(commands, inputs, intent, data, true, nonce, signature, deadline);
 
-        // Verify context was captured correctly during execution (from the second command)
+        // 验证执行过程中正确捕获了上下文（来自第二条命令）
         address expectedSigner = signer;
         assertEq(capturer.capturedSigner(), expectedSigner, 'Signer mismatch during multi-command execution');
         assertEq(capturer.capturedIntent(), intent, 'Intent mismatch during multi-command execution');
         assertEq(capturer.capturedData(), data, 'Data mismatch during multi-command execution');
 
-        // Verify all transfers happened
+        // 验证所有转账均已发生
         assertEq(recipient1.balance, AMOUNT / 3, 'Recipient1 should have received ETH');
         assertEq(recipient2.balance, AMOUNT / 3, 'Recipient2 should have received ETH');
 
-        // Verify context was cleared after execution
+        // 验证执行结束后上下文已被清除
         (address storedSigner, bytes32 storedIntent, bytes32 storedData) = router.signedRouteContext();
         assertEq(storedSigner, address(0), 'Signer should be cleared after execution');
         assertEq(storedIntent, bytes32(0), 'Intent should be cleared after execution');
@@ -271,10 +271,10 @@ contract RouteSignerTest is Test {
 
         bytes memory signature = signExecution(commands, inputs, intent, data, address(this), nonce, deadline);
 
-        // First execution should succeed
+        // 第一次执行应成功
         router.executeSigned{value: AMOUNT}(commands, inputs, intent, data, true, nonce, signature, deadline);
 
-        // Second execution with same nonce should revert
+        // 使用相同 nonce 的第二次执行应回滚（revert）
         vm.expectRevert(RouteSigner.NonceAlreadyUsed.selector);
         router.executeSigned{value: AMOUNT}(commands, inputs, intent, data, true, nonce, signature, deadline);
     }
@@ -286,20 +286,20 @@ contract RouteSignerTest is Test {
 
         bytes32 intent = keccak256('intent');
         bytes32 data = keccak256('data');
-        bytes32 optionalNonce = bytes32(type(uint256).max); // Sentinel value to skip nonce check
+        bytes32 optionalNonce = bytes32(type(uint256).max); // 用于跳过 nonce 检查的哨兵值
         uint256 deadline = block.timestamp + 1000;
 
         bytes memory signature = signExecution(commands, inputs, intent, data, address(this), optionalNonce, deadline);
 
         address expectedSigner = signer;
 
-        // First execution should succeed
+        // 第一次执行应成功
         router.executeSigned{value: AMOUNT}(commands, inputs, intent, data, true, optionalNonce, signature, deadline);
 
-        // Verify nonce was NOT marked as used
+        // 验证 nonce 未被标记为已使用
         assertFalse(router.noncesUsed(expectedSigner, optionalNonce), 'Optional nonce should not be marked as used');
 
-        // Second execution with same signature should also succeed (no replay protection)
+        // 使用相同签名的第二次执行也应成功（无重放保护）
         router.executeSigned{value: AMOUNT}(commands, inputs, intent, data, true, optionalNonce, signature, deadline);
     }
 
@@ -311,11 +311,11 @@ contract RouteSignerTest is Test {
         bytes32 intent = keccak256('intent');
         bytes32 data = keccak256('data');
         bytes32 nonce = keccak256('deadline-nonce');
-        uint256 deadline = block.timestamp - 1; // Deadline in the past
+        uint256 deadline = block.timestamp - 1; // 截止时间已过
 
         bytes memory signature = signExecution(commands, inputs, intent, data, address(this), nonce, deadline);
 
-        // Should revert with TransactionDeadlinePassed
+        // 应以 TransactionDeadlinePassed 回滚（revert）
         vm.expectRevert(IUniversalRouter.TransactionDeadlinePassed.selector);
         router.executeSigned{value: AMOUNT}(commands, inputs, intent, data, true, nonce, signature, deadline);
     }
@@ -330,12 +330,12 @@ contract RouteSignerTest is Test {
         bytes32 nonce = keccak256('invalid-sig-nonce');
         uint256 deadline = block.timestamp + 1000;
 
-        // Create a completely invalid signature
+        // 构造一个完全无效的签名
         bytes memory invalidSignature = abi.encodePacked(bytes32(uint256(1)), bytes32(uint256(2)), uint8(27));
 
         router.executeSigned{value: AMOUNT}(commands, inputs, intent, data, false, nonce, invalidSignature, deadline);
 
-        // Verify the recovered signer is NOT the expected signer
+        // 验证恢复出的签名者不是预期的签名者
         address expectedSigner = signer;
         assertTrue(capturer.capturedSigner() != expectedSigner, 'Invalid signature should recover different signer');
     }
@@ -351,16 +351,16 @@ contract RouteSignerTest is Test {
         bytes32 nonce = keccak256('tampered-commands-nonce');
         uint256 deadline = block.timestamp + 1000;
 
-        // Sign with original commands
+        // 使用原始 commands 签名
         bytes memory signature = signExecution(commands, inputs, intent, data, address(this), nonce, deadline);
 
-        // Tamper with commands - use TRANSFER with allow revert flag
+        // 篡改 commands：使用带允许回滚（allow revert）标志的 TRANSFER
         bytes memory tamperedCommands =
             abi.encodePacked(bytes1(uint8(Commands.TRANSFER) | uint8(Commands.FLAG_ALLOW_REVERT)));
 
         router.executeSigned{value: AMOUNT}(tamperedCommands, inputs, intent, data, false, nonce, signature, deadline);
 
-        // Verify the recovered signer is NOT the expected signer
+        // 验证恢复出的签名者不是预期的签名者
         address expectedSigner = signer;
         assertTrue(capturer.capturedSigner() != expectedSigner, 'Tampered commands should recover different signer');
     }
@@ -376,17 +376,17 @@ contract RouteSignerTest is Test {
         bytes32 nonce = keccak256('tampered-inputs-nonce');
         uint256 deadline = block.timestamp + 1000;
 
-        // Sign with original inputs
+        // 使用原始 inputs 签名
         bytes memory signature = signExecution(commands, inputs, intent, data, address(this), nonce, deadline);
 
-        // Tamper with inputs - change recipient
+        // 篡改 inputs：更改接收方
         address differentRecipient = makeAddr('differentRecipient');
         bytes[] memory tamperedInputs = new bytes[](1);
         tamperedInputs[0] = abi.encode(Constants.ETH, differentRecipient, AMOUNT);
 
         router.executeSigned{value: AMOUNT}(commands, tamperedInputs, intent, data, false, nonce, signature, deadline);
 
-        // Verify the recovered signer is NOT the expected signer
+        // 验证恢复出的签名者不是预期的签名者
         address expectedSigner = signer;
         assertTrue(capturer.capturedSigner() != expectedSigner, 'Tampered inputs should recover different signer');
     }
@@ -401,15 +401,15 @@ contract RouteSignerTest is Test {
         bytes32 nonce = keccak256('tampered-intent-nonce');
         uint256 deadline = block.timestamp + 1000;
 
-        // Sign with original intent
+        // 使用原始 intent 签名
         bytes memory signature = signExecution(commands, inputs, intent, data, address(this), nonce, deadline);
 
-        // Tamper with intent
+        // 篡改 intent
         bytes32 tamperedIntent = keccak256('different-intent');
 
         router.executeSigned{value: AMOUNT}(commands, inputs, tamperedIntent, data, false, nonce, signature, deadline);
 
-        // Verify the recovered signer is NOT the expected signer
+        // 验证恢复出的签名者不是预期的签名者
         address expectedSigner = signer;
         assertTrue(capturer.capturedSigner() != expectedSigner, 'Tampered intent should recover different signer');
     }
@@ -424,15 +424,15 @@ contract RouteSignerTest is Test {
         bytes32 nonce = keccak256('tampered-data-nonce');
         uint256 deadline = block.timestamp + 1000;
 
-        // Sign with original data
+        // 使用原始 data 签名
         bytes memory signature = signExecution(commands, inputs, intent, data, address(this), nonce, deadline);
 
-        // Tamper with data
+        // 篡改 data
         bytes32 tamperedData = keccak256('different-data');
 
         router.executeSigned{value: AMOUNT}(commands, inputs, intent, tamperedData, false, nonce, signature, deadline);
 
-        // Verify the recovered signer is NOT the expected signer
+        // 验证恢复出的签名者不是预期的签名者
         address expectedSigner = signer;
         assertTrue(capturer.capturedSigner() != expectedSigner, 'Tampered data should recover different signer');
     }
@@ -447,15 +447,15 @@ contract RouteSignerTest is Test {
         bytes32 nonce = keccak256('original-nonce');
         uint256 deadline = block.timestamp + 1000;
 
-        // Sign with original nonce
+        // 使用原始 nonce 签名
         bytes memory signature = signExecution(commands, inputs, intent, data, address(this), nonce, deadline);
 
-        // Tamper with nonce
+        // 篡改 nonce
         bytes32 tamperedNonce = keccak256('tampered-nonce');
 
         router.executeSigned{value: AMOUNT}(commands, inputs, intent, data, false, tamperedNonce, signature, deadline);
 
-        // Verify the recovered signer is NOT the expected signer
+        // 验证恢复出的签名者不是预期的签名者
         address expectedSigner = signer;
         assertTrue(capturer.capturedSigner() != expectedSigner, 'Tampered nonce should recover different signer');
     }
@@ -470,15 +470,15 @@ contract RouteSignerTest is Test {
         bytes32 nonce = keccak256('deadline-mismatch-nonce');
         uint256 deadline = block.timestamp + 1000;
 
-        // Sign with one deadline
+        // 使用某个截止时间签名
         bytes memory signature = signExecution(commands, inputs, intent, data, address(this), nonce, deadline);
 
-        // Call with different deadline
+        // 使用不同的截止时间调用
         uint256 differentDeadline = block.timestamp + 2000;
 
         router.executeSigned{value: AMOUNT}(commands, inputs, intent, data, false, nonce, signature, differentDeadline);
 
-        // Verify the recovered signer is NOT the expected signer
+        // 验证恢复出的签名者不是预期的签名者
         address expectedSigner = signer;
         assertTrue(capturer.capturedSigner() != expectedSigner, 'Wrong deadline should recover different signer');
     }
@@ -488,15 +488,15 @@ contract RouteSignerTest is Test {
         bytes[] memory inputs = new bytes[](1);
         inputs[0] = abi.encode(Constants.ETH, address(capturer), AMOUNT);
 
-        // Execute using regular execute() (not executeSigned)
+        // 使用常规的 execute()（而非 executeSigned）执行
         router.execute{value: AMOUNT}(commands, inputs, block.timestamp + 1000);
 
-        // Verify no context was captured during execution
+        // 验证执行过程中未捕获到任何上下文
         assertEq(capturer.capturedSigner(), address(0), 'Signer should be zero during regular execute');
         assertEq(capturer.capturedIntent(), bytes32(0), 'Intent should be zero during regular execute');
         assertEq(capturer.capturedData(), bytes32(0), 'Data should be zero during regular execute');
 
-        // Verify context is still zero after execution
+        // 验证执行结束后上下文仍为零
         (address storedSigner, bytes32 storedIntent, bytes32 storedData) = router.signedRouteContext();
         assertEq(storedSigner, address(0), 'Signer should be zero after regular execute');
         assertEq(storedIntent, bytes32(0), 'Intent should be zero after regular execute');
@@ -504,12 +504,12 @@ contract RouteSignerTest is Test {
     }
 
     function testNestedExecuteSubPlanPreservesContext() public {
-        // Create a sub-plan that transfers to the capturer contract (which will capture context)
+        // 创建一个向 capturer 合约转账的子计划（该合约会捕获上下文）
         bytes memory subCommands = abi.encodePacked(bytes1(uint8(Commands.TRANSFER)));
         bytes[] memory subInputs = new bytes[](1);
         subInputs[0] = abi.encode(Constants.ETH, address(capturer), AMOUNT / 2);
 
-        // Create main commands with EXECUTE_SUB_PLAN
+        // 创建包含 EXECUTE_SUB_PLAN 的主命令
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.EXECUTE_SUB_PLAN)));
         bytes[] memory inputs = new bytes[](1);
         inputs[0] = abi.encode(subCommands, subInputs);
@@ -523,13 +523,13 @@ contract RouteSignerTest is Test {
 
         router.executeSigned{value: AMOUNT}(commands, inputs, intent, data, true, nonce, signature, deadline);
 
-        // Verify context was preserved during nested execution
+        // 验证嵌套执行过程中上下文得以保留
         address expectedSigner = signer;
         assertEq(capturer.capturedSigner(), expectedSigner, 'Signer should be preserved in nested execution');
         assertEq(capturer.capturedIntent(), intent, 'Intent should be preserved in nested execution');
         assertEq(capturer.capturedData(), data, 'Data should be preserved in nested execution');
 
-        // Verify context was cleared after execution
+        // 验证执行结束后上下文已被清除
         (address storedSigner, bytes32 storedIntent, bytes32 storedData) = router.signedRouteContext();
         assertEq(storedSigner, address(0), 'Signer should be cleared after execution');
         assertEq(storedIntent, bytes32(0), 'Intent should be cleared after execution');
@@ -537,7 +537,7 @@ contract RouteSignerTest is Test {
     }
 
     function testContextNotLeakedBetweenTransactions() public {
-        // First transaction - signed execution
+        // 第一笔交易：签名执行
         bytes memory commands1 = abi.encodePacked(bytes1(uint8(Commands.TRANSFER)));
         bytes[] memory inputs1 = new bytes[](1);
         inputs1[0] = abi.encode(Constants.ETH, address(capturer), AMOUNT / 2);
@@ -551,19 +551,19 @@ contract RouteSignerTest is Test {
 
         router.executeSigned{value: AMOUNT / 2}(commands1, inputs1, intent1, data1, true, nonce1, signature1, deadline1);
 
-        // Verify first transaction context
+        // 验证第一笔交易的上下文
         address expectedSigner = signer;
         assertEq(capturer.capturedSigner(), expectedSigner, 'First transaction should capture signer');
         assertEq(capturer.capturedIntent(), intent1, 'First transaction should capture intent1');
         assertEq(capturer.capturedData(), data1, 'First transaction should capture data1');
 
-        // Verify context was cleared after first transaction
+        // 验证第一笔交易结束后上下文已被清除
         (address storedSigner, bytes32 storedIntent, bytes32 storedData) = router.signedRouteContext();
         assertEq(storedSigner, address(0), 'Context should be cleared between transactions');
         assertEq(storedIntent, bytes32(0), 'Intent should be cleared between transactions');
         assertEq(storedData, bytes32(0), 'Data should be cleared between transactions');
 
-        // Second transaction - different signed execution
+        // 第二笔交易：另一次签名执行
         bytes memory commands2 = abi.encodePacked(bytes1(uint8(Commands.TRANSFER)));
         bytes[] memory inputs2 = new bytes[](1);
         inputs2[0] = abi.encode(Constants.ETH, address(capturer), AMOUNT / 2);
@@ -577,12 +577,12 @@ contract RouteSignerTest is Test {
 
         router.executeSigned{value: AMOUNT / 2}(commands2, inputs2, intent2, data2, true, nonce2, signature2, deadline2);
 
-        // Verify second transaction has its own context (not leaked from first)
+        // 验证第二笔交易拥有自己的上下文（未从第一笔泄漏）
         assertEq(capturer.capturedSigner(), expectedSigner, 'Second transaction should capture signer');
         assertEq(capturer.capturedIntent(), intent2, 'Second transaction should capture intent2 (not intent1)');
         assertEq(capturer.capturedData(), data2, 'Second transaction should capture data2 (not data1)');
 
-        // Verify context was cleared after second transaction
+        // 验证第二笔交易结束后上下文已被清除
         (storedSigner, storedIntent, storedData) = router.signedRouteContext();
         assertEq(storedSigner, address(0), 'Context should be cleared after second transaction');
         assertEq(storedIntent, bytes32(0), 'Intent should be cleared after second transaction');
@@ -590,7 +590,7 @@ contract RouteSignerTest is Test {
     }
 
     function testDifferentContractAddresses() public {
-        // Deploy a second router
+        // 部署第二个路由器
         RouterParameters memory params = RouterParameters({
             permit2: address(0),
             weth9: address(0),
@@ -606,7 +606,7 @@ contract RouteSignerTest is Test {
         });
         UniversalRouter router2 = new UniversalRouter(params);
 
-        // Deploy a context capture contract for router2
+        // 为 router2 部署一个上下文捕获合约
         ContextCapture capturer2 = new ContextCapture(router2);
 
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.TRANSFER)));
@@ -618,22 +618,22 @@ contract RouteSignerTest is Test {
         bytes32 nonce = keccak256('different-contract-nonce');
         uint256 deadline = block.timestamp + 1000;
 
-        // Sign for router1 (uses router1's address in domain separator)
+        // 为 router1 签名（域分隔符中使用 router1 的地址）
         bytes memory signature = signExecution(commands, inputs, intent, data, address(this), nonce, deadline);
 
-        // Try to execute on router2 with signature for router1
+        // 尝试用 router1 的签名在 router2 上执行
         router2.executeSigned{value: AMOUNT}(commands, inputs, intent, data, false, nonce, signature, deadline);
 
-        // Verify the recovered signer is NOT the expected signer (because domain separator is different)
+        // 验证恢复出的签名者不是预期的签名者（因为域分隔符不同）
         address expectedSigner = signer;
         assertTrue(capturer2.capturedSigner() != expectedSigner, 'Signature should not be valid for different contract');
     }
 
     function testReentrantMaliciousContract() public {
-        // Deploy malicious contract
+        // 部署恶意合约
         ReentrantMaliciousContract malicious = new ReentrantMaliciousContract(router);
 
-        // Create commands that transfer to the malicious contract
+        // 创建向恶意合约转账的命令
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.TRANSFER)));
         bytes[] memory inputs = new bytes[](1);
         inputs[0] = abi.encode(Constants.ETH, address(malicious), AMOUNT);
@@ -645,8 +645,8 @@ contract RouteSignerTest is Test {
 
         bytes memory signature = signExecution(commands, inputs, intent, data, address(this), nonce, deadline);
 
-        // Expect revert - malicious contract's reentry attempt will fail and cause ETH transfer to fail
-        // (The reentry fails due to invalid signature, which happens before isNotLocked check)
+        // 预期回滚（revert）：恶意合约的重入尝试会失败，并导致 ETH 转账失败
+        // （重入因签名无效而失败，该失败发生在 isNotLocked 检查之前）
         vm.expectRevert('ETH_TRANSFER_FAILED');
         router.executeSigned{value: AMOUNT}(commands, inputs, intent, data, true, nonce, signature, deadline);
     }

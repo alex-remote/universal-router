@@ -46,30 +46,30 @@ describe('Uniswap V4 Tests:', () => {
   let v4PoolManager: PoolManager
   let v4PositionManager: PositionManager
 
-  // current market ETH price at block
+  // 该区块时的 ETH 市场价格
   const USD_ETH_PRICE = 3820
 
-  // USD-pegged -> (W)NATIVE trades
-  // exact in trade
+  // 美元锚定币 -> (W)NATIVE 的交易
+  // 精确输入交易
   const amountIn = 1000
   const amountInUSDC: BigNumber = expandTo6DecimalsBN(amountIn)
   const amountInDAI: BigNumber = expandTo18DecimalsBN(amountIn)
   const minAmountOutNative: BigNumber = expandTo18DecimalsBN(amountIn / Math.floor(USD_ETH_PRICE * 1.01))
 
-  // exact out trade
+  // 精确输出交易
   const amountOut = 0.26
   const amountOutNative = expandTo18DecimalsBN(amountOut)
   const maxAmountInUSDC = expandTo6DecimalsBN(amountOut * Math.floor(USD_ETH_PRICE * 1.01))
   const maxAmountInDAI = expandTo18DecimalsBN(amountOut * Math.floor(USD_ETH_PRICE * 1.01))
 
-  // (W)NATIVE -> USD-pegged trades
-  // exact in trade
+  // (W)NATIVE -> 美元锚定币的交易
+  // 精确输入交易
   const amountInNative: BigNumber = expandTo18DecimalsBN(1.23)
   const minAmountOutUSD = Math.floor(USD_ETH_PRICE * 0.99 * 1.23)
   const minAmountOutUSDC: BigNumber = expandTo6DecimalsBN(minAmountOutUSD)
   const minAmountOutDAI: BigNumber = expandTo18DecimalsBN(minAmountOutUSD)
 
-  // exact out trade
+  // 精确输出交易
   const amountOutUSD = 2345
   const amountOutUSDC: BigNumber = expandTo6DecimalsBN(amountOutUSD)
   const amountOutDAI: BigNumber = expandTo18DecimalsBN(amountOutUSD)
@@ -96,31 +96,31 @@ describe('Uniswap V4 Tests:', () => {
     planner = new RoutePlanner()
     v4Planner = new V4Planner()
 
-    // alice gives bob some tokens
+    // alice 给 bob 一些代币
     await daiContract.connect(alice).transfer(bob.address, expandTo18DecimalsBN(1000000))
     await wethContract.connect(alice).transfer(bob.address, expandTo18DecimalsBN(1000))
     await usdcContract.connect(alice).transfer(bob.address, expandTo6DecimalsBN(50000000))
 
-    // Bob max-approves the permit2 contract to access his DAI and WETH
+    // Bob 给 permit2 合约最大授权，使其可动用他的 DAI 和 WETH
     await daiContract.connect(bob).approve(permit2.address, MAX_UINT)
     await wethContract.connect(bob).approve(permit2.address, MAX_UINT)
     await usdcContract.connect(bob).approve(permit2.address, MAX_UINT)
 
-    // for these tests Bob gives the router max approval on permit2
+    // 在这些测试中，Bob 在 permit2 上给路由器最大授权
     await permit2.approve(DAI.address, router.address, MAX_UINT160, DEADLINE)
     await permit2.approve(WETH.address, router.address, MAX_UINT160, DEADLINE)
     await permit2.approve(USDC.address, router.address, MAX_UINT160, DEADLINE)
 
-    // for setting up pools, bob gives position manager approval on permit2
+    // 为了搭建池，bob 在 permit2 上给 PositionManager 授权
     await permit2.approve(DAI.address, v4PositionManager.address, MAX_UINT160, DEADLINE)
     await permit2.approve(WETH.address, v4PositionManager.address, MAX_UINT160, DEADLINE)
     await permit2.approve(USDC.address, v4PositionManager.address, MAX_UINT160, DEADLINE)
-    // bob initializes 3 v4 pools
+    // bob 初始化 3 个 v4 池
     await initializeV4Pool(v4PoolManager, USDC_WETH.poolKey, USDC_WETH.price)
     await initializeV4Pool(v4PoolManager, DAI_USDC.poolKey, DAI_USDC.price)
     await initializeV4Pool(v4PoolManager, ETH_USDC.poolKey, ETH_USDC.price)
 
-    // bob adds liquidity to the pools
+    // bob 向这些池添加流动性
     await addLiquidityToV4Pool(v4PositionManager, USDC_WETH, expandTo18DecimalsBN(2).toString(), bob)
     await addLiquidityToV4Pool(v4PositionManager, DAI_USDC, expandTo18DecimalsBN(400).toString(), bob)
     await addLiquidityToV4Pool(v4PositionManager, ETH_USDC, expandTo18DecimalsBN(0.1).toString(), bob)
@@ -227,7 +227,7 @@ describe('Uniswap V4 Tests:', () => {
           amountOutMinimum: minAmountOutNative,
         },
       ])
-      // take 1% of the output to alice, then settle and take the rest to the caller
+      // 将输出的 1% 提取给 alice，然后结算并将其余部分提取给调用者
       v4Planner.addAction(Actions.TAKE_PORTION, [WETH.address, alice.address, ONE_PERCENT_BIPS])
       v4Planner.addAction(Actions.SETTLE_ALL, [currencyIn, MAX_UINT])
       v4Planner.addAction(Actions.TAKE_ALL, [wethContract.address, 0])
@@ -258,14 +258,14 @@ describe('Uniswap V4 Tests:', () => {
     it('completes a v4 exactIn 2 hop swap, with take portion on input', async () => {
       // DAI -> USDC -> WETH
       let currencyIn = daiContract.address
-      // trade is 1% less than previously, so adjust expected output
+      // 交易量比之前少 1%，因此相应调整预期输出
       let minOut = minAmountOutNative.mul(99).div(100)
 
-      // settle the input tokens to the pool manager
+      // 向 PoolManager 结算输入代币
       v4Planner.addAction(Actions.SETTLE, [currencyIn, amountInDAI, true])
-      // take 1% of the input tokens
+      // 提取输入代币的 1%
       v4Planner.addAction(Actions.TAKE_PORTION, [currencyIn, alice.address, ONE_PERCENT_BIPS])
-      // swap using the OPEN_DELTA as input amount
+      // 以 OPEN_DELTA 作为输入数量进行兑换
       v4Planner.addAction(Actions.SWAP_EXACT_IN, [
         {
           currencyIn,
@@ -275,7 +275,7 @@ describe('Uniswap V4 Tests:', () => {
           amountOutMinimum: minOut,
         },
       ])
-      // take the output weth
+      // 提取输出的 weth
       v4Planner.addAction(Actions.TAKE_ALL, [wethContract.address, minOut])
 
       planner.addCommand(CommandType.V4_SWAP, [v4Planner.actions, v4Planner.params])
@@ -311,7 +311,7 @@ describe('Uniswap V4 Tests:', () => {
           amountOutMinimum: minAmountOutNative,
         },
       ])
-      // take 1% of the output to alice, then settle and take the rest to the caller
+      // 将输出的 1% 提取给 alice，然后结算并将其余部分提取给调用者
       v4Planner.addAction(Actions.TAKE_PORTION, [ETH_ADDRESS, alice.address, ONE_PERCENT_BIPS])
       v4Planner.addAction(Actions.SETTLE_ALL, [currencyIn, MAX_UINT])
       v4Planner.addAction(Actions.TAKE_ALL, [ETH_ADDRESS, 0])
@@ -452,7 +452,7 @@ describe('Uniswap V4 Tests:', () => {
         wethContract,
         daiContract,
         usdcContract,
-        amountInNative // pass in the ETH to the call
+        amountInNative // 随调用传入 ETH
       )
 
       expect(await ethers.provider.getBalance(router.address)).to.be.eq(0)
@@ -484,7 +484,7 @@ describe('Uniswap V4 Tests:', () => {
         wethContract,
         daiContract,
         usdcContract,
-        amountInNative // pass in the ETH to the call
+        amountInNative // 随调用传入 ETH
       )
 
       expect(await ethers.provider.getBalance(router.address)).to.be.eq(0)
@@ -516,7 +516,7 @@ describe('Uniswap V4 Tests:', () => {
         wethContract,
         daiContract,
         usdcContract,
-        amountInNative // pass in the ETH to the call
+        amountInNative // 随调用传入 ETH
       )
 
       expect(await ethers.provider.getBalance(router.address)).to.be.eq(0)
@@ -539,7 +539,7 @@ describe('Uniswap V4 Tests:', () => {
       v4Planner.addAction(Actions.SETTLE_ALL, [ETH_ADDRESS, MAX_UINT])
       v4Planner.addAction(Actions.TAKE_ALL, [usdcContract.address, 0])
       planner.addCommand(CommandType.V4_SWAP, [v4Planner.actions, v4Planner.params])
-      // sweep excess ETH leftover back to the caller!
+      // 将剩余的多余 ETH 清扫回调用者！
       planner.addCommand(CommandType.SWEEP, [ETH_ADDRESS, MSG_SENDER, 0])
 
       const { usdcBalanceBefore, usdcBalanceAfter, ethBalanceBefore, ethBalanceAfter, gasSpent } = await executeRouter(
@@ -549,10 +549,10 @@ describe('Uniswap V4 Tests:', () => {
         wethContract,
         daiContract,
         usdcContract,
-        maxAmountInNative // send in the max amount of ETH
+        maxAmountInNative // 发送最大数量的 ETH
       )
 
-      // no eth left in the router
+      // 路由器中没有剩余 eth
       expect(await ethers.provider.getBalance(router.address)).to.be.eq(0)
       expect(ethBalanceBefore.sub(ethBalanceAfter)).to.be.lte(maxAmountInNative.add(gasSpent))
       expect(usdcBalanceAfter.sub(usdcBalanceBefore)).to.be.eq(amountOutUSDC)
@@ -574,7 +574,7 @@ describe('Uniswap V4 Tests:', () => {
       v4Planner.addAction(Actions.TAKE_ALL, [currencyOut, 0])
 
       planner.addCommand(CommandType.V4_SWAP, [v4Planner.actions, v4Planner.params])
-      // sweep excess ETH leftover back to the caller!
+      // 将剩余的多余 ETH 清扫回调用者！
       planner.addCommand(CommandType.SWEEP, [ETH_ADDRESS, MSG_SENDER, 0])
 
       const { usdcBalanceBefore, usdcBalanceAfter, ethBalanceBefore, ethBalanceAfter, gasSpent } = await executeRouter(
@@ -584,10 +584,10 @@ describe('Uniswap V4 Tests:', () => {
         wethContract,
         daiContract,
         usdcContract,
-        maxAmountInNative // send in the max amount of ETH
+        maxAmountInNative // 发送最大数量的 ETH
       )
 
-      // no eth left in the router
+      // 路由器中没有剩余 eth
       expect(await ethers.provider.getBalance(router.address)).to.be.eq(0)
       expect(ethBalanceBefore.sub(ethBalanceAfter)).to.be.lte(maxAmountInNative.add(gasSpent))
       expect(usdcBalanceAfter.sub(usdcBalanceBefore)).to.be.eq(amountOutUSDC)
@@ -609,7 +609,7 @@ describe('Uniswap V4 Tests:', () => {
       v4Planner.addAction(Actions.TAKE_ALL, [daiContract.address, 0])
 
       planner.addCommand(CommandType.V4_SWAP, [v4Planner.actions, v4Planner.params])
-      // sweep excess ETH leftover back to the caller!
+      // 将剩余的多余 ETH 清扫回调用者！
       planner.addCommand(CommandType.SWEEP, [ETH_ADDRESS, MSG_SENDER, 0])
 
       const { daiBalanceBefore, daiBalanceAfter, ethBalanceBefore, ethBalanceAfter, gasSpent } = await executeRouter(
@@ -619,10 +619,10 @@ describe('Uniswap V4 Tests:', () => {
         wethContract,
         daiContract,
         usdcContract,
-        maxAmountInNative // send in the max amount of ETH
+        maxAmountInNative // 发送最大数量的 ETH
       )
 
-      // no eth left in the router
+      // 路由器中没有剩余 eth
       expect(await ethers.provider.getBalance(router.address)).to.be.eq(0)
       expect(ethBalanceBefore.sub(ethBalanceAfter)).to.be.lte(maxAmountInNative.add(gasSpent))
       expect(daiBalanceAfter.sub(daiBalanceBefore)).to.be.eq(amountOutDAI)

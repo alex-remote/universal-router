@@ -83,7 +83,7 @@ export async function getPermitSignature(
   signer: SignerWithAddress,
   permit2: IPermit2
 ): Promise<string> {
-  // look up the correct nonce for this permit
+  // 查询此 permit 对应的正确 nonce
   const nextNonce = (await permit2.allowance(signer.address, permit.details.token, permit.spender)).nonce
   permit.details.nonce = nextNonce
   return await signPermit(permit, signer, permit2.address)

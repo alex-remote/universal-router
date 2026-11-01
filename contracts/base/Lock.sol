@@ -4,27 +4,27 @@ pragma solidity ^0.8.24;
 import {Locker} from '../libraries/Locker.sol';
 
 /// @title Lock
-/// @notice A contract that provides a reentrancy lock for external calls
+/// @notice 为外部调用提供重入锁的合约
 contract Lock {
-    /// @notice Thrown when attempting to reenter a locked function from an external caller
+    /// @notice 外部调用者尝试重入已加锁的函数时抛出
     error ContractLocked();
 
-    /// @notice Modifier enforcing a reentrancy lock that allows self-reentrancy
-    /// @dev If the contract is not locked, use msg.sender as the locker
+    /// @notice 强制执行重入锁的修饰器，允许自重入
+    /// @dev 若合约未加锁，则以 msg.sender 作为锁持有者
     modifier isNotLocked() {
-        // Apply a reentrancy lock for all external callers
+        // 对所有外部调用者施加重入锁
         if (msg.sender != address(this)) {
             if (Locker.isLocked()) revert ContractLocked();
             Locker.set(msg.sender);
             _;
             Locker.set(address(0));
         } else {
-            // The contract is allowed to reenter itself, so the lock is not checked
+            // 合约允许重入自身，因此不检查锁
             _;
         }
     }
 
-    /// @notice return the current locker of the contract
+    /// @notice 返回合约当前的锁持有者
     function _getLocker() internal view returns (address) {
         return Locker.get();
     }

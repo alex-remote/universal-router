@@ -3,9 +3,9 @@ pragma solidity ^0.8.15;
 
 import {Test} from 'forge-std/Test.sol';
 
-/// @notice Placeholder for cross-protocol permissioned pool swap tests.
-///         Tests here should cover V2+V3+V4 multi-hop scenarios involving permissioned pools.
+/// @notice 跨协议许可池兑换测试的占位合约。
+///         此处的测试应覆盖涉及许可池的 V2+V3+V4 多跳场景。
 contract PermissionedV4Test is Test {
-    // TODO: implement cross-protocol swap tests for permissioned pools
+    // TODO: 实现许可池的跨协议兑换测试
 
     }

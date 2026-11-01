@@ -44,7 +44,7 @@ jobs:
         with:
           version: v1.4.3
 
-      # This is required separately from yarn test because it generates the typechain definitions
+      # 需要独立于 yarn test 单独执行，因为这一步会生成 typechain 类型定义
       - name: Compile
         run: yarn compile
 

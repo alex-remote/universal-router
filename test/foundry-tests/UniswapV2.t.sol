@@ -43,7 +43,7 @@ abstract contract UniswapV2Test is Test {
         });
         router = new UniversalRouter(params);
 
-        // pair doesn't exist, make a mock one
+        // 交易对不存在，则创建一个 mock 交易对
         if (FACTORY.getPair(token0(), token1()) == address(0)) {
             address pair = FACTORY.createPair(token0(), token1());
             deal(token0(), pair, 100 ether);
@@ -170,7 +170,7 @@ abstract contract UniswapV2Test is Test {
         address[] memory path = new address[](2);
         path[0] = token0();
         path[1] = token1();
-        // path has 2 tokens = 1 hop, but we pass 2 slippage values (wrong length)
+        // 路径含 2 个代币 = 1 跳，但我们传入了 2 个滑点值（长度错误）
         uint256[] memory hopSlippage = new uint256[](2);
         hopSlippage[0] = 0;
         hopSlippage[1] = 0;
@@ -186,7 +186,7 @@ abstract contract UniswapV2Test is Test {
         address[] memory path = new address[](2);
         path[0] = token0();
         path[1] = token1();
-        // path has 2 tokens = 1 hop, but we pass 2 slippage values (wrong length)
+        // 路径含 2 个代币 = 1 跳，但我们传入了 2 个滑点值（长度错误）
         uint256[] memory hopSlippage = new uint256[](2);
         hopSlippage[0] = 0;
         hopSlippage[1] = 0;
@@ -202,7 +202,7 @@ abstract contract UniswapV2Test is Test {
         address[] memory path = new address[](2);
         path[0] = token0();
         path[1] = token1();
-        // Set minPrice to 0 (any price is acceptable)
+        // 将 minPrice 设为 0（任何价格均可接受）
         uint256[] memory hopSlippage = new uint256[](1);
         hopSlippage[0] = 0;
         bytes[] memory inputs = new bytes[](1);
@@ -218,7 +218,7 @@ abstract contract UniswapV2Test is Test {
         address[] memory path = new address[](2);
         path[0] = token0();
         path[1] = token1();
-        // Set an impossibly high minPrice so it reverts
+        // 设置一个不可能达到的高 minPrice，使其回滚（revert）
         uint256[] memory hopSlippage = new uint256[](1);
         hopSlippage[0] = type(uint256).max;
         bytes[] memory inputs = new bytes[](1);

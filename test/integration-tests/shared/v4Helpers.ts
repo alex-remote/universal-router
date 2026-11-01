@@ -144,7 +144,7 @@ export const encodeMultihopExactOutPath = (poolKeys: any[], currencyOut: string)
       hooks: poolKeys[i - 1].hooks,
       hookData: '0x',
     }
-    // unshift pushes to the beginning of the array
+    // unshift 会将元素插入到数组开头
     pathKeys.unshift(pathKey)
     currencyOut = currencyIn
   }
